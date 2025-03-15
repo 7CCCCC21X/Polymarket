@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Polymarket 投注金额计算</title>
+  <style>
+    body {
+      background: #f7f7f7;
+      color: #333;
+      font-family: "Microsoft YaHei", sans-serif;
+      margin: 40px auto;
+      max-width: 700px;
+      padding: 0 20px;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    label {
+      font-weight: bold;
+      margin-right: 5px;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100px;
+      padding: 6px;
+      margin-right: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      padding: 6px 12px;
+      margin-right: 10px;
+      background-color: #007bff;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .outcome-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #result div {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+    .footer {
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 14px;
+    }
+    .footer a {
+      color: #007bff;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Polymarket 投注金额计算</h1>
+
+  <div class="card">
+    <label for="totalAmount">总资金(元)：</label>
+    <input type="number" id="totalAmount" placeholder="如：6000" />
+  </div>
+
+  <div class="card" id="outcomesContainer">
+    <!-- 动态添加事件行的容器 -->
+  </div>
+
+  <div class="card" style="text-align:center;">
+    <button id="addOutcomeBtn">添加事件</button>
+    <button id="calculateBtn">计算</button>
+  </div>
+
+  <div class="card" id="result"></div>
+
+  <div class="footer">
+    作者推特: 
+    <a href="https://x.com/0xXIAOc" target="_blank">@0xXIAOc</a>
+  </div>
+
+  <script>
+    const outcomesContainer = document.getElementById('outcomesContainer');
+    const addOutcomeBtn = document.getElementById('addOutcomeBtn');
+    const calculateBtn = document.getElementById('calculateBtn');
+    const resultDiv = document.getElementById('result');
+
+    let outcomeCount = 0;
+
+    // 添加一个新的事件行
+    function addOutcomeRow() {
+      outcomeCount++;
+      const row = document.createElement('div');
+      row.className = 'outcome-row';
+      row.id = 'outcomeRow_' + outcomeCount;
+
+      // 事件名称
+      const labelName = document.createElement('label');
+      labelName.innerText = '事件名称:';
+      const inputName = document.createElement('input');
+      inputName.type = 'text';
+      inputName.placeholder = '如：A';
+      inputName.id = 'outcomeName_' + outcomeCount;
+
+      // 胜率(%) 输入
+      const labelProb = document.createElement('label');
+      labelProb.innerText = '胜率(%):';
+      const inputProb = document.createElement('input');
+      inputProb.type = 'number';
+      inputProb.placeholder = '如：30';
+      inputProb.id = 'outcomeProb_' + outcomeCount;
+
+      // 删除按钮
+      const removeBtn = document.createElement('button');
+      removeBtn.innerText = '删除';
+      removeBtn.onclick = () => {
+        outcomesContainer.removeChild(row);
+      };
+
+      row.appendChild(labelName);
+      row.appendChild(inputName);
+      row.appendChild(labelProb);
+      row.appendChild(inputProb);
+      row.appendChild(removeBtn);
+
+      outcomesContainer.appendChild(row);
+    }
+
+    // 计算对冲金额
+    function calculate() {
+      resultDiv.innerHTML = ''; // 清空结果
+
+      const totalAmountInput = document.getElementById('totalAmount').value;
+      if (!totalAmountInput || parseFloat(totalAmountInput) <= 0) {
+        alert('请先输入有效的总资金！');
+        return;
+      }
+      const T = parseFloat(totalAmountInput);
+
+      // 收集所有事件
+      const outcomeRows = outcomesContainer.getElementsByClassName('outcome-row');
+      if (outcomeRows.length === 0) {
+        alert('请先添加至少一个事件！');
+        return;
+      }
+
+      let outcomes = [];
+      let sumProb = 0; // 用于累加所有胜率
+      for (let row of outcomeRows) {
+        const nameInput = row.querySelector('input[id^="outcomeName_"]');
+        const probInput = row.querySelector('input[id^="outcomeProb_"]');
+
+        const name = nameInput.value.trim() || '未命名事件';
+        const probValue = parseFloat(probInput.value); // 胜率(%)
+
+        if (isNaN(probValue) || probValue <= 0) {
+          alert(`事件「${name}」的胜率无效，请输入大于0的数字。`);
+          return;
+        }
+        outcomes.push({ name, prob: probValue });
+        sumProb += probValue;
+      }
+
+      // 若总胜率之和为0，不可计算
+      if (sumProb === 0) {
+        alert('所有事件胜率之和为0，无法计算！');
+        return;
+      }
+
+      let EV = 0; // 期望值
+
+      outcomes.forEach(o => {
+        // 胜率(%) => p_i = o.prob / 100
+        const p_i = o.prob / 100;
+
+        // 赔率 = 100 / 胜率
+        const odds = 100 / o.prob; // 十进制赔率
+
+        // 归一化后占比 = o.prob / sumProb
+        const bet = T * (o.prob / sumProb); // 投注金额
+
+        // 获胜后的金额 = 赔率 × 投注
+        const winAmount = odds * bet;
+
+        // 净收益 = winAmount - T
+        const netIfWin = winAmount - T;
+
+        // 期望值累加
+        EV += p_i * netIfWin;
+
+        // 结果行
+        // 例: "A 胜率: 30% - 投注金额: 2400.00 元 - 对应赔率(十进制): 3.333  获胜后的金额: 8000.00"
+        const resultLine =
+          `${o.name} 胜率: ${o.prob}% - ` +
+          `投注金额: ${bet.toFixed(2)} 元 - ` +
+          `对应赔率(十进制): ${odds.toFixed(3)}  ` +
+          `获胜后的金额: ${winAmount.toFixed(2)}`;
+
+        // 在界面显示
+        const divLine = document.createElement('div');
+        divLine.textContent = resultLine;
+        resultDiv.appendChild(divLine);
+      });
+
+      // 最后显示期望值
+      const evLine = document.createElement('div');
+      evLine.textContent = `期望值(EV): ${EV.toFixed(2)} 元`;
+      resultDiv.appendChild(evLine);
+    }
+
+    // 默认添加2个示例事件行
+    addOutcomeRow();
+    addOutcomeRow();
+
+    // 绑定按钮事件
+    addOutcomeBtn.onclick = addOutcomeRow;
+    calculateBtn.onclick = calculate;
+  </script>
+</body>
+</html>
