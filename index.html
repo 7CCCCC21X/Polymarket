@@ -4,117 +4,105 @@
   <meta charset="UTF-8">
   <title>Polymarket 工具箱</title>
   <style>
-    /* 通用样式 */
     body {
       font-family: "Segoe UI", "Microsoft YaHei", Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(135deg, #eef2f3, #8e9eab);
+      background: #ffffff; /* 设置整个页面的背景为白色 */
       margin: 0;
-      padding: 20px;
+      padding: 0;
       color: #333;
     }
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin: 30px 0 20px;
+      font-size: 28px;
       color: #0078d7;
     }
     h2 {
       margin-top: 40px;
       text-align: center;
+      font-size: 22px;
       padding-bottom: 8px;
       border-bottom: 2px solid #0078d7;
       color: #0078d7;
     }
-    p {
+    .desc {
       text-align: center;
-      font-size: 16px;
-      margin-bottom: 10px;
+      font-size: 14px;
+      color: #555;
+      margin: 10px auto 20px;
+      max-width: 750px;
+      line-height: 1.6;
     }
     .card {
       background: #fff;
       padding: 20px;
-      border-radius: 8px;
+      border-radius: 6px;
       margin: 20px auto;
       max-width: 800px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transition: transform 0.2s;
-    }
-    .card:hover {
-      transform: scale(1.01);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     button {
-      padding: 8px 16px;
-      margin: 8px 4px;
+      padding: 10px 20px;
+      margin: 10px 5px;
       background-color: #0078d7;
       color: #fff;
       border: none;
       border-radius: 4px;
       cursor: pointer;
       font-size: 16px;
-      transition: background-color 0.3s;
+      transition: background-color 0.3s, transform 0.2s;
     }
     button:hover:not(:disabled) {
       background-color: #005fa3;
+      transform: scale(1.05);
     }
     button:disabled {
       background-color: #999;
       cursor: not-allowed;
     }
-    input[type="number"], input[type="text"] {
-      width: 120px;
+    input[type="number"], input[type="text"], textarea {
+      font-size: 14px;
       padding: 8px;
-      margin-right: 12px;
       border: 1px solid #ccc;
       border-radius: 4px;
-      font-size: 14px;
+      outline: none;
+      margin-bottom: 10px;
     }
-    .outcome-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .outcome-row label {
-      width: 80px;
-    }
-    #calcResult div {
-      margin-bottom: 8px;
-      line-height: 1.6;
-      font-size: 15px;
-    }
-    #loading {
-      text-align: center;
-      font-size: 18px;
-      color: #0078d7;
-      margin: 10px;
-    }
-    /* 文本框样式 */
     textarea {
       width: 90%;
       height: 100px;
       display: block;
-      font-size: 14px;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
       margin: 10px auto;
       resize: vertical;
     }
-    /* 表格样式 */
+    .table-container {
+      width: 100%;
+      margin: 20px auto;
+      overflow: visible;
+      height: auto;
+    }
+    #results {
+      width: 100%;
+      height: auto;
+      background-color: #fff; /* 白色背景 */
+      border-radius: 8px;
+      padding: 20px;
+    }
+
     table {
       width: 100%;
-      max-width: 1000px;
-      margin: 20px auto;
       border-collapse: collapse;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       background-color: #fff;
       border-radius: 6px;
-      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
     th, td {
-      padding: 12px 10px;
+      padding: 16px 12px;
       text-align: center;
       border-bottom: 1px solid #eee;
       font-size: 14px;
       vertical-align: middle;
+      white-space: nowrap;
     }
     th {
       background-color: #0078d7;
@@ -130,12 +118,12 @@
       max-width: 40px;
       vertical-align: middle;
     }
-    /* 页脚 */
     .footer {
       text-align: center;
       margin-top: 40px;
       font-size: 14px;
       color: #555;
+      padding-bottom: 20px;
     }
     .footer a {
       color: #0078d7;
@@ -144,13 +132,65 @@
     .footer a:hover {
       text-decoration: underline;
     }
+
+    /* 地址列宽度设置 */
+    #resultsTable td:nth-child(2),
+    #resultsTable th:nth-child(2) {
+      width: 300px;  /* 设置地址列宽度 */
+    }
+
+    /* 设置其他列的宽度 */
+    th:nth-child(3), td:nth-child(3) {
+      width: 150px; /* 交易额 */
+      text-align: right;
+    }
+    th:nth-child(4), td:nth-child(4) {
+      width: 120px; /* 池子数量 */
+    }
+    th:nth-child(5), td:nth-child(5) {
+      width: 120px; /* 盈亏 */
+      text-align: right;
+    }
+    th:nth-child(6), td:nth-child(6) {
+      width: 140px; /* 可用金额 */
+      text-align: right;
+    }
+    th:nth-child(7), td:nth-child(7) {
+      width: 140px; /* 持仓金额 */
+      text-align: right;
+    }
+    th:nth-child(8), td:nth-child(8) {
+      width: 140px; /* 总余额 */
+      text-align: right;
+    }
+    th:nth-child(9), td:nth-child(9) {
+      width: 180px; /* 活跃情况 */
+    }
+    th:nth-child(10), td:nth-child(10) {
+      width: 150px; /* 持仓信息 */
+    }
+
+    /* 投注金额计算部分 */
+    #outcomesContainer {
+      margin-top: 20px;
+    }
+    .outcome-row {
+      margin-bottom: 10px;
+    }
+    .outcome-row input {
+      margin-right: 12px;
+    }
   </style>
 </head>
 <body>
   <h1>Polymarket 工具箱</h1>
-  
-  <!-- 投注金额计算功能 -->
+
+  <!-- Polymarket 投注金额计算功能 -->
   <h2>Polymarket 投注金额计算</h2>
+  <div class="desc">
+    根据不同事件的胜率分配资金，并计算对应的期望收益（EV）。
+  </div>
+
   <div class="card">
     <label for="totalAmount">总资金(元)：</label>
     <input type="number" id="totalAmount" placeholder="如：6000" />
@@ -163,56 +203,77 @@
     <button id="calculateBtn">计算</button>
   </div>
   <div class="card" id="calcResult"></div>
-  
-  <!-- 批量查询功能（Safe + 可选持仓信息 - 多条合并一行） -->
-  <h2>Polymarket数据批量查询</h2>
+
+  <!-- Polymarket 数据批量查询功能 -->
+  <h2>Polymarket 数据批量查询</h2>
+  <div class="desc">
+    可输入多个地址（每行一个），查询其 Safe 信息、交易额、盈亏、活跃情况、持仓等数据。
+  </div>
+
   <div class="card">
     <p>请输入地址（每行一个）：</p>
-    <textarea id="ownerAddresses" placeholder="例如: 0x0000000000000000000000000"></textarea>
-    
-    <!-- 复选框：是否查询持仓信息（默认不勾选） -->
-    <label style="margin-left:10px;">
-      <input type="checkbox" id="checkPositions" />
-      是否查询持仓信息
-    </label>
-    <br/>
-    
-    <button id="queryBtn" onclick="queryAll()">查询</button>
+    <textarea id="ownerAddresses" placeholder="例如：0x123..."></textarea>
+    <div style="text-align:center;">
+      <label>
+        <input type="checkbox" id="checkPositions" />
+        同时查询持仓信息
+      </label>
+    </div>
+    <div style="text-align:center;">
+      <button id="queryBtn" onclick="queryAll()">查询</button>
+    </div>
     <div id="loading" style="display:none;">加载中...</div>
-    <div id="results"></div>
+
+    <!-- 查询结果表格 -->
+    <div id="results">
+      <div class="table-container">
+        <table id="resultsTable">
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>地址</th>
+              <th>交易额</th>
+              <th>池子数量</th>
+              <th>盈亏</th>
+              <th>可用金额</th>
+              <th>持仓金额</th>
+              <th>总余额</th>
+              <th>活跃情况</th>
+              <th>持仓信息</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- 查询后动态插入行 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-  
-  <div class="footer">
-    作者推特: 
-    <a href="https://x.com/0xXIAOc" target="_blank">@0xXIAOc</a>
-  </div>
-  
+
   <script>
-    /********** 1. 投注金额计算部分 **********/
+    // 投注金额计算部分
     const outcomesContainer = document.getElementById('outcomesContainer');
     const addOutcomeBtn = document.getElementById('addOutcomeBtn');
     const calculateBtn = document.getElementById('calculateBtn');
     const calcResultDiv = document.getElementById('calcResult');
     let outcomeCount = 0;
-    
-    // 添加事件行函数
+
     function addOutcomeRow() {
       outcomeCount++;
       const row = document.createElement('div');
       row.className = 'outcome-row';
       row.id = 'outcomeRow_' + outcomeCount;
-      
+
       const labelName = document.createElement('label');
       labelName.innerText = '事件名称:';
       const inputName = document.createElement('input');
       inputName.type = 'text';
-      
+
       const labelProb = document.createElement('label');
       labelProb.innerText = '胜率(%):';
       const inputProb = document.createElement('input');
       inputProb.type = 'number';
-      
-      // 第一行：如：A, 如：30；第二行：如：B, 如：70；其后自己输入
+
       if (outcomeCount === 1) {
         inputName.placeholder = '如：A';
         inputProb.placeholder = '如：30';
@@ -220,28 +281,26 @@
         inputName.placeholder = '如：B';
         inputProb.placeholder = '如：70';
       } else {
-        inputName.placeholder = '如：XXX';
+        inputName.placeholder = '如：其他事件';
         inputProb.placeholder = '如：50';
       }
-      
+
       const removeBtn = document.createElement('button');
       removeBtn.innerText = '删除';
       removeBtn.onclick = () => outcomesContainer.removeChild(row);
-      
+
       row.appendChild(labelName);
       row.appendChild(inputName);
       row.appendChild(labelProb);
       row.appendChild(inputProb);
       row.appendChild(removeBtn);
-      
+
       outcomesContainer.appendChild(row);
     }
-    
-    // 默认添加2个事件
-    addOutcomeRow(); // 第1个：A,30
-    addOutcomeRow(); // 第2个：B,70
-    
-    // 点击“计算”按钮
+
+    addOutcomeRow();
+    addOutcomeRow();
+
     function calculate() {
       calcResultDiv.innerHTML = '';
       const totalAmountInput = document.getElementById('totalAmount').value;
@@ -250,13 +309,13 @@
         return;
       }
       const T = parseFloat(totalAmountInput);
-      
+
       const outcomeRows = outcomesContainer.getElementsByClassName('outcome-row');
       if (outcomeRows.length === 0) {
         alert('请先添加至少一个事件！');
         return;
       }
-      
+
       let outcomes = [];
       let sumProb = 0;
       for (let row of outcomeRows) {
@@ -275,315 +334,200 @@
         alert('所有事件胜率之和为0，无法计算！');
         return;
       }
-      
+
       let EV = 0;
       outcomes.forEach(o => {
-        // 胜率(%) => p_i
         const p_i = o.prob / 100;
-        // 十进制赔率 => 100 / o.prob
         const odds = 100 / o.prob;
-        // 投注金额分配 = T * (o.prob / sumProb)
         const bet = T * (o.prob / sumProb);
-        // 获胜后金额
         const winAmount = odds * bet;
-        // 净收益
         const netIfWin = winAmount - T;
-        // 累计到期望值
         EV += p_i * netIfWin;
-        
-        const line = `${o.name} 胜率: ${o.prob}% - 投注金额: ${bet.toFixed(2)} 元 - 对应赔率: ${odds.toFixed(3)} - 获胜后的金额: ${winAmount.toFixed(2)} 元`;
+
+        const line = `${o.name} 胜率: ${o.prob}% - 投注金额: ${bet.toFixed(2)} 元 - 对应赔率: ${odds.toFixed(3)} - 获胜后金额: ${winAmount.toFixed(2)} 元`;
         const divLine = document.createElement('div');
         divLine.textContent = line;
         calcResultDiv.appendChild(divLine);
       });
-      
+
       const evLine = document.createElement('div');
       evLine.textContent = `期望值(EV): ${EV.toFixed(2)} 元`;
       calcResultDiv.appendChild(evLine);
     }
-    
+
     addOutcomeBtn.onclick = addOutcomeRow;
     calculateBtn.onclick = calculate;
-    
-    
-    /********** 2. 批量查询功能: Safe + 可选持仓信息（多条持仓合并一行） **********/
-    
-    // 1) queryPositions 返回所有记录
-    async function queryPositions(safeAddress) {
-      const url = `https://data-api.polymarket.com/positions?user=${safeAddress}&sizeThreshold=.1&limit=50&offset=0&sortBy=CURRENT&sortDirection=DESC`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
-        const data = await response.json();
-        // 返回数组
-        if (Array.isArray(data)) {
-          return data;  // 多条
-        } else {
-          return [];
-        }
-      } catch (err) {
-        return { error: err.toString() };
-      }
-    }
-    
+
+    // 数据批量查询功能部分
     async function queryTradeVolume(safeAddress) {
       const url = `https://lb-api.polymarket.com/volume?window=all&limit=1&address=${safeAddress}`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return { amount: data[0].amount };
-        } else {
-          return { error: "未返回交易数据" };
-        }
-      } catch (err) {
-        return { error: err.toString() };
-      }
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.length > 0 ? parseFloat(data[0].amount).toFixed(2) : '-';
     }
-    
+
     async function queryTradedCount(safeAddress) {
       const url = `https://data-api.polymarket.com/traded?user=${safeAddress}`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
-        const data = await response.json();
-        if (data && typeof data.traded !== 'undefined') {
-          return { traded: data.traded };
-        } else {
-          return { error: "未返回池子数量" };
-        }
-      } catch (err) {
-        return { error: err.toString() };
-      }
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.traded !== undefined ? data.traded : '-';
     }
-    
+
     async function queryProfit(safeAddress) {
       const url = `https://lb-api.polymarket.com/profit?window=all&limit=1&address=${safeAddress}`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return { profit: data[0].amount };
-        } else {
-          return { error: "未返回盈亏数据" };
-        }
-      } catch (err) {
-        return { error: err.toString() };
-      }
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.length > 0 ? parseFloat(data[0].amount).toFixed(2) : '-';
     }
-    
+
     async function queryUSDCBalanceForAddress(safeAddress) {
-      const rpcUrl = "https://polygon.llamarpc.com/";
-      const contractAddress = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
-      const data = "0x70a08231000000000000000000000000" + safeAddress.slice(2);
+      const rpcUrl = 'https://polygon.llamarpc.com/';
+      const contractAddress = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
+      const data = '0x70a08231000000000000000000000000' + safeAddress.slice(2);
       const request = {
-        jsonrpc: "2.0",
-        method: "eth_call",
-        params: [{ to: contractAddress, data: data }, "latest"],
+        jsonrpc: '2.0',
+        method: 'eth_call',
+        params: [{ to: contractAddress, data: data }, 'latest'],
         id: 1
       };
-      try {
-        const response = await fetch(rpcUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify([request])
-        });
-        const resultArr = await response.json();
-        const result = resultArr[0]?.result || "0x0";
-        const balance = parseInt(result, 16) / 1e6;
-        return { balance: balance, balanceStr: balance.toFixed(2) + " USDC" };
-      } catch (err) {
-        return { error: "查询异常: " + err.toString() };
-      }
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([request])
+      });
+      const resultArr = await response.json();
+      const result = resultArr[0]?.result || '0x0';
+      const balance = parseInt(result, 16) / 1e6;
+      return balance.toFixed(2) + ' USDC';
     }
-    
+
     async function queryHoldingValue(safeAddress) {
       const url = `https://data-api.polymarket.com/value?user=${safeAddress}`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0 && data[0].value !== undefined) {
-          return { value: data[0].value };
-        } else {
-          return { error: "未返回持仓金额" };
-        }
-      } catch (err) {
-        return { error: err.toString() };
-      }
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.length > 0 && data[0].value !== undefined ? parseFloat(data[0].value).toFixed(2) : '-';
     }
-    
+
+    async function queryActivity(safeAddress) {
+      const url = `https://data-api.polymarket.com/activity?user=${safeAddress}&limit=999&offset=0`;
+      const response = await fetch(url);
+      const data = await response.json();
+      if (!Array.isArray(data) || data.length === 0) return { days: 0, months: 0, lastActive: '-' };
+
+      data.sort((a, b) => b.timestamp - a.timestamp);
+
+      const activeDaysSet = new Set();
+      const activeMonthsSet = new Set();
+      data.forEach(item => {
+        const date = new Date(item.timestamp * 1000);
+        activeDaysSet.add(date.toISOString().split('T')[0]);
+        activeMonthsSet.add(date.toISOString().slice(0, 7));
+      });
+
+      const lastActiveDate = new Date(data[0].timestamp * 1000);
+      const now = new Date();
+      const diffDays = Math.floor((now - lastActiveDate) / (1000 * 60 * 60 * 24));
+      const lastActive = diffDays === 0 ? '今天' : `${diffDays}天前`;
+
+      return { days: activeDaysSet.size, months: activeMonthsSet.size, lastActive };
+    }
+
+    async function queryPositions(safeAddress) {
+      const url = `https://data-api.polymarket.com/positions?user=${safeAddress}&sizeThreshold=.1&limit=50&offset=0&sortBy=CURRENT&sortDirection=DESC`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data;
+    }
+
     async function queryAll() {
-      const resultsDiv = document.getElementById("results");
-      resultsDiv.innerHTML = "";
-      const loadingDiv = document.getElementById("loading");
-      const queryBtn = document.getElementById("queryBtn");
-      
-      // 是否查询持仓
-      const checkPositions = document.getElementById("checkPositions").checked;
-      
-      loadingDiv.style.display = "block";
+      const loadingDiv = document.getElementById('loading');
+      const queryBtn = document.getElementById('queryBtn');
+      const tableBody = document.querySelector('#resultsTable tbody');
+      const checkPositions = document.getElementById('checkPositions').checked;
+
+      loadingDiv.style.display = 'block';
       queryBtn.disabled = true;
-      
-      const input = document.getElementById("ownerAddresses").value.trim();
-      const owners = input.split("\n").map(addr => addr.trim()).filter(addr => addr !== "");
+
+      const input = document.getElementById('ownerAddresses').value.trim();
+      const owners = input.split('\n').map(addr => addr.trim()).filter(addr => addr !== '');
       if (owners.length === 0) {
-        alert("请输入有效的地址！");
-        loadingDiv.style.display = "none";
+        alert('请输入有效的地址！');
+        loadingDiv.style.display = 'none';
         queryBtn.disabled = false;
         return;
       }
-      
-      // 构建表格
-      const table = document.createElement("table");
-      const thead = document.createElement("thead");
-      thead.innerHTML = `
-        <tr>
-          <th>序号</th>
-          <th>地址</th>
-          <th>交易额</th>
-          <th>池子数量</th>
-          <th>盈亏</th>
-          <th>可用金额</th>
-          <th>持仓金额</th>
-          <th>总余额</th>
-          <th>持仓信息</th>
-        </tr>
-      `;
-      table.appendChild(thead);
-      const tbody = document.createElement("tbody");
-      table.appendChild(tbody);
-      resultsDiv.appendChild(table);
-      
+
+      tableBody.innerHTML = '';
       let serial = 1;
-      
+
       for (const ownerAddress of owners) {
-        // 查询 Safe 列表
         const safesUrl = `https://safe-client.safe.global/v1/owners/${ownerAddress}/safes`;
         try {
           const response = await fetch(safesUrl);
           if (!response.ok) {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${serial++}</td>
-              <td>${ownerAddress}</td>
-              <td colspan="7" class="error">Safe 查询失败: ${response.statusText}</td>
-            `;
-            tbody.appendChild(tr);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${serial++}</td><td>${ownerAddress}</td><td colspan="8" class="error">Safe 查询失败: ${response.statusText}</td>`;
+            tableBody.appendChild(tr);
             continue;
           }
-          
+
           const safeData = await response.json();
-          const chain137Safes = safeData["137"];
+          const chain137Safes = safeData['137'];
           if (!Array.isArray(chain137Safes) || chain137Safes.length === 0) {
-            // 无数据
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-              <td>${serial++}</td>
-              <td>${ownerAddress}</td>
-              <td colspan="7" class="error">无数据</td>
-            `;
-            tbody.appendChild(tr);
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${serial++}</td><td>${ownerAddress}</td><td colspan="8" class="error">无数据</td>`;
+            tableBody.appendChild(tr);
             continue;
           }
-          
-          // 遍历 Safe 地址
+
           for (const safeAddress of chain137Safes) {
-            // 并行查询 5 个接口
-            const [
-              tradeVolumeResult,
-              tradedResult,
-              profitResult,
-              usdcBalanceResult,
-              holdingValueResult
-            ] = await Promise.all([
-              queryTradeVolume(safeAddress),
-              queryTradedCount(safeAddress),
-              queryProfit(safeAddress),
-              queryUSDCBalanceForAddress(safeAddress),
-              queryHoldingValue(safeAddress)
-            ]);
-            
-            // Safe级数据
-            const tradeVolume = tradeVolumeResult.error ? "-" : parseFloat(tradeVolumeResult.amount).toFixed(2);
-            const traded = tradedResult.error ? "-" : tradedResult.traded;
-            const profit = profitResult.error ? "-" : parseFloat(profitResult.profit).toFixed(2);
-            const available = usdcBalanceResult.error ? "-" : usdcBalanceResult.balance.toFixed(2);
-            const holding = holdingValueResult.error ? "-" : parseFloat(holdingValueResult.value).toFixed(2);
-            let total = "-";
-            if (!usdcBalanceResult.error && !holdingValueResult.error) {
-              total = (usdcBalanceResult.balance + parseFloat(holdingValueResult.value)).toFixed(2);
-            }
+            const tradeVolume = await queryTradeVolume(safeAddress);
+            const tradedCount = await queryTradedCount(safeAddress);
+            const profit = await queryProfit(safeAddress);
+            const available = await queryUSDCBalanceForAddress(safeAddress);
+            const holding = await queryHoldingValue(safeAddress);
+            const activity = await queryActivity(safeAddress);
 
-            // 构建持仓信息
-            let positionCell = "-";
-            if (checkPositions) {
-              // 查询多条持仓
-              const posArr = await queryPositions(safeAddress);
-              if (posArr && posArr.error) {
-                positionCell = `<span class="error">持仓异常: ${posArr.error}</span>`;
-              } else if (!posArr || posArr.length === 0) {
-                positionCell = `<span class="error">无持仓信息</span>`;
-              } else {
-                // 多条持仓合并 => 同一单元格
-                const itemsHtml = posArr.map(pos => {
-                  const posTitle = pos.title || "-";
-                  const posIcon = pos.icon || "";
-                  const posInit = (pos.initialValue !== undefined) ? pos.initialValue : "-";
-                  const posCurrent = (pos.currentValue !== undefined) ? pos.currentValue : "-";
-                  const posCashPnl = (pos.cashPnl !== undefined) ? pos.cashPnl : "-";
-                  const posEndDate = pos.endDate || "-";
+            // 查询持仓信息
+            const positions = await queryPositions(safeAddress);
 
-                  return `
-                    <div style="margin-bottom:8px;">
-                      <strong>标题：</strong>${posTitle}<br/>
-                      <strong>图标：</strong>${
-                        posIcon
-                          ? `<img src="${posIcon}" alt="图标" class="icon-img">`
-                          : "-"
-                      }<br/>
-                      <strong>初始价值：</strong>${posInit}<br/>
-                      <strong>当前价值：</strong>${posCurrent}<br/>
-                      <strong>盈亏金额：</strong>${posCashPnl}<br/>
-                      <strong>结束日期：</strong>${posEndDate}
-                    </div>
-                  `;
-                }).join("<hr/>");
-                
-                positionCell = itemsHtml;
-              }
-            }
-            
-            // 构建表格行 => 同一行
-            const tr = document.createElement("tr");
+            const total = (parseFloat(available) + parseFloat(holding)).toFixed(2);
+            const activityCell = `天: ${activity.days}<br>月: ${activity.months}<br>最后活跃: ${activity.lastActive}`;
+
+            const tr = document.createElement('tr');
             tr.innerHTML = `
               <td>${serial++}</td>
               <td>${ownerAddress}</td>
               <td>${tradeVolume}</td>
-              <td>${traded}</td>
+              <td>${tradedCount}</td>
               <td>${profit}</td>
-              <td>${available} USDC</td>
+              <td>${available}</td>
               <td>${holding}</td>
               <td>${total} USDC</td>
-              <td style="text-align:left;">${positionCell}</td>
+              <td>${activityCell}</td>
+              <td style="text-align:left;">
+                ${checkPositions ? positions.map(position => `
+                  <div>
+                    <img src="${position.icon}" alt="${position.title}" class="icon-img" />
+                    <strong>${position.title}</strong><br>
+                    初始价值：${position.initialValue} <br>
+                    当前价值：${position.currentValue} <br>
+                    盈亏金额：${position.cashPnl} <br>
+                    结束日期：${position.endDate}
+                  </div>
+                  `).join('<br>') : '-'}
+              </td>
             `;
-            tbody.appendChild(tr);
+            tableBody.appendChild(tr);
           }
         } catch (err) {
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>${serial++}</td>
-            <td>${ownerAddress}</td>
-            <td colspan="7" class="error">Safe 查询异常: ${err.toString()}</td>
-          `;
-          tbody.appendChild(tr);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `<td>${serial++}</td><td>${ownerAddress}</td><td colspan="8" class="error">Safe 查询异常: ${err.toString()}</td>`;
+          tableBody.appendChild(tr);
         }
       }
-      
-      // 查询完成
-      loadingDiv.style.display = "none";
+
+      loadingDiv.style.display = 'none';
       queryBtn.disabled = false;
     }
   </script>
