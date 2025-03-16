@@ -164,7 +164,7 @@
   </div>
   <div class="card" id="calcResult"></div>
   
-  <!-- 批量查询功能（Safe + 可选持仓信息） -->
+  <!-- 批量查询功能（Safe + 可选持仓信息 - 多条合并一行） -->
   <h2>Polymarket数据批量查询</h2>
   <div class="card">
     <p>请输入地址（每行一个）：</p>
@@ -212,8 +212,7 @@
       const inputProb = document.createElement('input');
       inputProb.type = 'number';
       
-      // 第一行：默认 placeholder：如：A, 如：30
-      // 第二行：默认 placeholder：如：B, 如：70
+      // 第一行：如：A, 如：30；第二行：如：B, 如：70；其后自己输入
       if (outcomeCount === 1) {
         inputName.placeholder = '如：A';
         inputProb.placeholder = '如：30';
@@ -221,7 +220,6 @@
         inputName.placeholder = '如：B';
         inputProb.placeholder = '如：70';
       } else {
-        // 后续新增的可自行输入
         inputName.placeholder = '如：XXX';
         inputProb.placeholder = '如：50';
       }
@@ -240,8 +238,8 @@
     }
     
     // 默认添加2个事件
-    addOutcomeRow(); // 第1个事件：A, 30
-    addOutcomeRow(); // 第2个事件：B, 70
+    addOutcomeRow(); // 第1个：A,30
+    addOutcomeRow(); // 第2个：B,70
     
     // 点击“计算”按钮
     function calculate() {
@@ -282,7 +280,7 @@
       outcomes.forEach(o => {
         // 胜率(%) => p_i
         const p_i = o.prob / 100;
-        // 十进制赔率 => 100 / 胜率
+        // 十进制赔率 => 100 / o.prob
         const odds = 100 / o.prob;
         // 投注金额分配 = T * (o.prob / sumProb)
         const bet = T * (o.prob / sumProb);
@@ -308,7 +306,26 @@
     calculateBtn.onclick = calculate;
     
     
-    /********** 2. 批量查询功能: Safe + 可选持仓信息 **********/
+    /********** 2. 批量查询功能: Safe + 可选持仓信息（多条持仓合并一行） **********/
+    
+    // 1) queryPositions 返回所有记录
+    async function queryPositions(safeAddress) {
+      const url = `https://data-api.polymarket.com/positions?user=${safeAddress}&sizeThreshold=.1&limit=50&offset=0&sortBy=CURRENT&sortDirection=DESC`;
+      try {
+        const response = await fetch(url);
+        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
+        const data = await response.json();
+        // 返回数组
+        if (Array.isArray(data)) {
+          return data;  // 多条
+        } else {
+          return [];
+        }
+      } catch (err) {
+        return { error: err.toString() };
+      }
+    }
+    
     async function queryTradeVolume(safeAddress) {
       const url = `https://lb-api.polymarket.com/volume?window=all&limit=1&address=${safeAddress}`;
       try {
@@ -398,22 +415,6 @@
       }
     }
     
-    async function queryPositions(safeAddress) {
-      const url = `https://data-api.polymarket.com/positions?user=${safeAddress}&sizeThreshold=.1&limit=50&offset=0&sortBy=CURRENT&sortDirection=DESC`;
-      try {
-        const response = await fetch(url);
-        if (!response.ok) return { error: `查询失败: ${response.statusText}` };
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return data[0];  // 只返回第一条
-        } else {
-          return null;  // 无持仓信息
-        }
-      } catch (err) {
-        return { error: err.toString() };
-      }
-    }
-    
     async function queryAll() {
       const resultsDiv = document.getElementById("results");
       resultsDiv.innerHTML = "";
@@ -435,7 +436,7 @@
         return;
       }
       
-      // 表格
+      // 构建表格
       const table = document.createElement("table");
       const thead = document.createElement("thead");
       thead.innerHTML = `
@@ -459,6 +460,7 @@
       let serial = 1;
       
       for (const ownerAddress of owners) {
+        // 查询 Safe 列表
         const safesUrl = `https://safe-client.safe.global/v1/owners/${ownerAddress}/safes`;
         try {
           const response = await fetch(safesUrl);
@@ -472,93 +474,100 @@
             tbody.appendChild(tr);
             continue;
           }
+          
           const safeData = await response.json();
           const chain137Safes = safeData["137"];
-          if (Array.isArray(chain137Safes) && chain137Safes.length > 0) {
-            for (const safeAddress of chain137Safes) {
-              // 并发查询 5 个接口
-              const [
-                tradeVolumeResult,
-                tradedResult,
-                profitResult,
-                usdcBalanceResult,
-                holdingValueResult
-              ] = await Promise.all([
-                queryTradeVolume(safeAddress),
-                queryTradedCount(safeAddress),
-                queryProfit(safeAddress),
-                queryUSDCBalanceForAddress(safeAddress),
-                queryHoldingValue(safeAddress)
-              ]);
-              
-              // 如果勾选了持仓信息，则再查positions
-              let positionsResult = null;
-              if (checkPositions) {
-                positionsResult = await queryPositions(safeAddress);
-              }
-              
-              // 整理结果
-              const tradeVolume = tradeVolumeResult.error ? "-" : parseFloat(tradeVolumeResult.amount).toFixed(2);
-              const traded = tradedResult.error ? "-" : tradedResult.traded;
-              const profit = profitResult.error ? "-" : parseFloat(profitResult.profit).toFixed(2);
-              const available = usdcBalanceResult.error ? "-" : usdcBalanceResult.balance.toFixed(2);
-              const holding = holdingValueResult.error ? "-" : parseFloat(holdingValueResult.value).toFixed(2);
-              let total = "-";
-              if (!usdcBalanceResult.error && !holdingValueResult.error) {
-                total = (usdcBalanceResult.balance + parseFloat(holdingValueResult.value)).toFixed(2);
-              }
-              
-              // 持仓信息
-              let positionCell = "-";
-              if (checkPositions) {
-                if (positionsResult === null) {
-                  positionCell = `<span class="error">无持仓信息</span>`;
-                } else if (positionsResult && positionsResult.error) {
-                  positionCell = `<span class="error">持仓异常: ${positionsResult.error}</span>`;
-                } else {
-                  const posTitle = positionsResult.title || "-";
-                  const posIcon = positionsResult.icon || "";
-                  const posInit = positionsResult.initialValue ?? "-";
-                  const posCurrent = positionsResult.currentValue ?? "-";
-                  const posEndDate = positionsResult.endDate || "-";
-                  positionCell = `
-                    <div style="text-align:left;">
-                      <strong>标题：</strong>${posTitle}<br>
-                      <strong>图标：</strong>${
-                        posIcon
-                          ? `<img src="${posIcon}" alt="图标" class="icon-img">`
-                          : "-"
-                      }<br>
-                      <strong>初始价值：</strong>${posInit}<br>
-                      <strong>当前价值：</strong>${posCurrent}<br>
-                      <strong>结束日期：</strong>${posEndDate}
-                    </div>
-                  `;
-                }
-              }
-              
-              // 表格行
-              const tr = document.createElement("tr");
-              tr.innerHTML = `
-                <td>${serial++}</td>
-                <td>${ownerAddress}</td>
-                <td>${tradeVolume}</td>
-                <td>${traded}</td>
-                <td>${profit}</td>
-                <td>${available} USDC</td>
-                <td>${holding}</td>
-                <td>${total} USDC</td>
-                <td>${positionCell}</td>
-              `;
-              tbody.appendChild(tr);
-            }
-          } else {
+          if (!Array.isArray(chain137Safes) || chain137Safes.length === 0) {
             // 无数据
             const tr = document.createElement("tr");
             tr.innerHTML = `
               <td>${serial++}</td>
               <td>${ownerAddress}</td>
               <td colspan="7" class="error">无数据</td>
+            `;
+            tbody.appendChild(tr);
+            continue;
+          }
+          
+          // 遍历 Safe 地址
+          for (const safeAddress of chain137Safes) {
+            // 并行查询 5 个接口
+            const [
+              tradeVolumeResult,
+              tradedResult,
+              profitResult,
+              usdcBalanceResult,
+              holdingValueResult
+            ] = await Promise.all([
+              queryTradeVolume(safeAddress),
+              queryTradedCount(safeAddress),
+              queryProfit(safeAddress),
+              queryUSDCBalanceForAddress(safeAddress),
+              queryHoldingValue(safeAddress)
+            ]);
+            
+            // Safe级数据
+            const tradeVolume = tradeVolumeResult.error ? "-" : parseFloat(tradeVolumeResult.amount).toFixed(2);
+            const traded = tradedResult.error ? "-" : tradedResult.traded;
+            const profit = profitResult.error ? "-" : parseFloat(profitResult.profit).toFixed(2);
+            const available = usdcBalanceResult.error ? "-" : usdcBalanceResult.balance.toFixed(2);
+            const holding = holdingValueResult.error ? "-" : parseFloat(holdingValueResult.value).toFixed(2);
+            let total = "-";
+            if (!usdcBalanceResult.error && !holdingValueResult.error) {
+              total = (usdcBalanceResult.balance + parseFloat(holdingValueResult.value)).toFixed(2);
+            }
+
+            // 构建持仓信息
+            let positionCell = "-";
+            if (checkPositions) {
+              // 查询多条持仓
+              const posArr = await queryPositions(safeAddress);
+              if (posArr && posArr.error) {
+                positionCell = `<span class="error">持仓异常: ${posArr.error}</span>`;
+              } else if (!posArr || posArr.length === 0) {
+                positionCell = `<span class="error">无持仓信息</span>`;
+              } else {
+                // 多条持仓合并 => 同一单元格
+                const itemsHtml = posArr.map(pos => {
+                  const posTitle = pos.title || "-";
+                  const posIcon = pos.icon || "";
+                  const posInit = (pos.initialValue !== undefined) ? pos.initialValue : "-";
+                  const posCurrent = (pos.currentValue !== undefined) ? pos.currentValue : "-";
+                  const posCashPnl = (pos.cashPnl !== undefined) ? pos.cashPnl : "-";
+                  const posEndDate = pos.endDate || "-";
+
+                  return `
+                    <div style="margin-bottom:8px;">
+                      <strong>标题：</strong>${posTitle}<br/>
+                      <strong>图标：</strong>${
+                        posIcon
+                          ? `<img src="${posIcon}" alt="图标" class="icon-img">`
+                          : "-"
+                      }<br/>
+                      <strong>初始价值：</strong>${posInit}<br/>
+                      <strong>当前价值：</strong>${posCurrent}<br/>
+                      <strong>盈亏金额：</strong>${posCashPnl}<br/>
+                      <strong>结束日期：</strong>${posEndDate}
+                    </div>
+                  `;
+                }).join("<hr/>");
+                
+                positionCell = itemsHtml;
+              }
+            }
+            
+            // 构建表格行 => 同一行
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${serial++}</td>
+              <td>${ownerAddress}</td>
+              <td>${tradeVolume}</td>
+              <td>${traded}</td>
+              <td>${profit}</td>
+              <td>${available} USDC</td>
+              <td>${holding}</td>
+              <td>${total} USDC</td>
+              <td style="text-align:left;">${positionCell}</td>
             `;
             tbody.appendChild(tr);
           }
@@ -573,6 +582,7 @@
         }
       }
       
+      // 查询完成
       loadingDiv.style.display = "none";
       queryBtn.disabled = false;
     }
