@@ -1,535 +1,213 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8">
-  <title>Polymarket 工具箱</title>
-  <style>
-    body {
-      font-family: "Segoe UI", "Microsoft YaHei", Tahoma, Geneva, Verdana, sans-serif;
-      background: #ffffff; /* 设置整个页面的背景为白色 */
-      margin: 0;
-      padding: 0;
-      color: #333;
-    }
-    h1 {
-      text-align: center;
-      margin: 30px 0 20px;
-      font-size: 28px;
-      color: #0078d7;
-    }
-    h2 {
-      margin-top: 40px;
-      text-align: center;
-      font-size: 22px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #0078d7;
-      color: #0078d7;
-    }
-    .desc {
-      text-align: center;
-      font-size: 14px;
-      color: #555;
-      margin: 10px auto 20px;
-      max-width: 750px;
-      line-height: 1.6;
-    }
-    .card {
-      background: #fff;
-      padding: 20px;
-      border-radius: 6px;
-      margin: 20px auto;
-      max-width: 800px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    button {
-      padding: 10px 20px;
-      margin: 10px 5px;
-      background-color: #0078d7;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 16px;
-      transition: background-color 0.3s, transform 0.2s;
-    }
-    button:hover:not(:disabled) {
-      background-color: #005fa3;
-      transform: scale(1.05);
-    }
-    button:disabled {
-      background-color: #999;
-      cursor: not-allowed;
-    }
-    input[type="number"], input[type="text"], textarea {
-      font-size: 14px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      outline: none;
-      margin-bottom: 10px;
-    }
-    textarea {
-      width: 90%;
-      height: 100px;
-      display: block;
-      margin: 10px auto;
-      resize: vertical;
-    }
-    .table-container {
-      width: 100%;
-      margin: 20px auto;
-      overflow: visible;
-      height: auto;
-    }
-    #results {
-      width: 100%;
-      height: auto;
-      background-color: #fff; /* 白色背景 */
-      border-radius: 8px;
-      padding: 20px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: #fff;
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-    th, td {
-      padding: 16px 12px;
-      text-align: center;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
-      vertical-align: middle;
-      white-space: nowrap;
-    }
-    th {
-      background-color: #0078d7;
-      color: #fff;
-    }
-    tr:last-child td {
-      border-bottom: none;
-    }
-    .error {
-      color: red;
-    }
-    .icon-img {
-      max-width: 40px;
-      vertical-align: middle;
-    }
-    .footer {
-      text-align: center;
-      margin-top: 40px;
-      font-size: 14px;
-      color: #555;
-      padding-bottom: 20px;
-    }
-    .footer a {
-      color: #0078d7;
-      text-decoration: none;
-    }
-    .footer a:hover {
-      text-decoration: underline;
-    }
-
-    /* 地址列宽度设置 */
-    #resultsTable td:nth-child(2),
-    #resultsTable th:nth-child(2) {
-      width: 300px;  /* 设置地址列宽度 */
-    }
-
-    /* 设置其他列的宽度 */
-    th:nth-child(3), td:nth-child(3) {
-      width: 150px; /* 交易额 */
-      text-align: right;
-    }
-    th:nth-child(4), td:nth-child(4) {
-      width: 120px; /* 池子数量 */
-    }
-    th:nth-child(5), td:nth-child(5) {
-      width: 120px; /* 盈亏 */
-      text-align: right;
-    }
-    th:nth-child(6), td:nth-child(6) {
-      width: 140px; /* 可用金额 */
-      text-align: right;
-    }
-    th:nth-child(7), td:nth-child(7) {
-      width: 140px; /* 持仓金额 */
-      text-align: right;
-    }
-    th:nth-child(8), td:nth-child(8) {
-      width: 140px; /* 总余额 */
-      text-align: right;
-    }
-    th:nth-child(9), td:nth-child(9) {
-      width: 180px; /* 活跃情况 */
-    }
-    th:nth-child(10), td:nth-child(10) {
-      width: 150px; /* 持仓信息 */
-    }
-
-    /* 投注金额计算部分 */
-    #outcomesContainer {
-      margin-top: 20px;
-    }
-    .outcome-row {
-      margin-bottom: 10px;
-    }
-    .outcome-row input {
-      margin-right: 12px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<title>Polymarket 数据批量查询</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<style>
+:root{--c-primary:#0078d7;--c-primary-dark:#005fa3;--c-bg:#fafafa;--c-card:#fff;--c-border:#e5e7eb;
+      --c-text:#222;--c-sub:#555;--c-green:#16a34a;--c-red:#e11d48;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,Segoe UI,PingFang SC,Helvetica,Arial,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.6;padding:24px}
+h1{text-align:center;font-size:28px;margin-bottom:24px;color:var(--c-primary)}
+h2{text-align:center;font-size:22px;margin:40px 0 12px;color:var(--c-primary);position:relative}
+h2::after{content:'';display:block;width:80px;height:2px;background:var(--c-primary);margin:8px auto 0;border-radius:1px}
+.desc{max-width:780px;margin:0 auto 20px;text-align:center;font-size:14px;color:var(--c-sub)}
+.card{max-width:1000px;margin:0 auto 24px;background:var(--c-card);border:1px solid var(--c-border);border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:24px}
+textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border:1px solid var(--c-border);border-radius:6px}
+button{padding:10px 18px;font-size:15px;border:none;border-radius:6px;background:var(--c-primary);color:#fff;margin:8px;cursor:pointer}
+button:hover:not(:disabled){background:var(--c-primary-dark);transform:translateY(-2px)}
+button:disabled{background:#9ca3af}
+.center{text-align:center}
+#loading{margin-top:12px;text-align:center;color:var(--c-primary)}
+progress{width:100%;height:8px;border:none;border-radius:4px;background:var(--c-border)}
+progress::-webkit-progress-value{background:var(--c-primary)}
+#summary{display:none;margin:18px 0 12px;padding:10px 12px;background:#e8f1ff;border-left:4px solid var(--c-primary);border-radius:4px;color:var(--c-primary);font-size:14px}
+table{width:100%;border-collapse:collapse;background:var(--c-card)}
+th,td{padding:14px 10px;border-bottom:1px solid var(--c-border);font-size:14px}
+th{background:var(--c-primary);color:#fff;text-align:center;position:sticky;top:0}
+tbody tr:nth-child(even){background:#f7fafd}
+td.number{text-align:right}
+td:nth-child(1),th:nth-child(1){position:sticky;left:0;background:var(--c-card);min-width:46px;text-align:center}
+td:nth-child(2),th:nth-child(2){position:sticky;left:46px;background:var(--c-card);min-width:220px;text-align:left}
+.positive{color:var(--c-green)}.negative{color:var(--c-red)}
+.inactive{color:var(--c-red)}
+.copy{margin-left:4px;font-size:14px;color:var(--c-sub);cursor:pointer}
+.copy:hover{color:var(--c-primary)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:4px;font-size:14px;opacity:0;transition:.3s}
+.footer{text-align:center;font-size:14px;color:var(--c-sub);margin-top:40px}
+.footer a{color:var(--c-primary);text-decoration:none}
+</style>
 </head>
 <body>
-  <h1>Polymarket 工具箱</h1>
+<h1>Polymarket 数据批量查询</h1>
+<h2>批量查询地址数据</h2>
+<p class="desc">粘贴地址（每行一个），系统按顺序逐个查询并实时更新结果。</p>
 
-  <!-- Polymarket 投注金额计算功能 -->
-  <h2>Polymarket 投注金额计算</h2>
-  <div class="desc">
-    根据不同事件的胜率分配资金，并计算对应的期望收益（EV）。
+<div class="card">
+  <textarea id="input" placeholder="&#10;"></textarea>
+  <div class="center" style="margin-top:12px;"><label><input type="checkbox" id="withPos"> 同时查询持仓信息</label></div>
+  <div class="center" style="margin-top:18px;"><button id="run">查询</button><button id="csv" disabled>导出 CSV</button></div>
+  <div id="loading" style="display:none;"><progress id="bar" value="0" max="100"></progress><div id="barTxt"></div></div>
+  <div id="summary"></div>
+
+  <div style="overflow-x:auto;">
+    <table id="tbl"><thead>
+      <tr><th>#</th><th>地址</th><th class="number">交易额</th><th class="number">池子数</th>
+          <th class="number">盈亏</th><th class="number">可用</th><th class="number">持仓</th>
+          <th class="number">总余额</th><th class="number">日活</th><th class="number">月活</th><th>最后活跃</th><th>持仓信息</th></tr>
+    </thead><tbody></tbody></table>
   </div>
+</div>
 
-  <div class="card">
-    <label for="totalAmount">总资金(元)：</label>
-    <input type="number" id="totalAmount" placeholder="如：6000" />
-  </div>
-  <div class="card" id="outcomesContainer">
-    <!-- 动态添加事件行 -->
-  </div>
-  <div class="card" style="text-align:center;">
-    <button id="addOutcomeBtn">添加事件</button>
-    <button id="calculateBtn">计算</button>
-  </div>
-  <div class="card" id="calcResult"></div>
+<p class="footer">© 2025 Polymarket Toolbox ｜ <a href="https://x.com/0xXIAOc" target="_blank">0xXIAOc</a></p>
+<div id="toast" class="toast"></div>
 
-  <!-- Polymarket 数据批量查询功能 -->
-  <h2>Polymarket 数据批量查询</h2>
-  <div class="desc">
-    可输入多个地址（每行一个），查询其 Safe 信息、交易额、盈亏、活跃情况、持仓等数据。
-  </div>
+<script>
+/* ===== 工具函数 ===== */
+const $ = s => document.querySelector(s);
+const fmtInt  = n => isNaN(+n) ? '-' : Math.round(+n).toLocaleString('en-US');
+const fmtDec  = n => isNaN(+n) ? '-' : (+n).toLocaleString('en-US', { minimumFractionDigits: (+n % 1 ? 2 : 0) });
+const clip    = a => a.length > 12 ? `${a.slice(0,6)}…${a.slice(-4)}` : a;
+function toast(t){const el=$("#toast");el.textContent=t;el.style.opacity=1;setTimeout(()=>el.style.opacity=0,1500);}
+function copy(addr){navigator.clipboard.writeText(addr).then(()=>toast('已复制'));}
 
-  <div class="card">
-    <p>请输入地址（每行一个）：</p>
-    <textarea id="ownerAddresses" placeholder="例如：0x123..."></textarea>
-    <div style="text-align:center;">
-      <label>
-        <input type="checkbox" id="checkPositions" />
-        同时查询持仓信息
-      </label>
-    </div>
-    <div style="text-align:center;">
-      <button id="queryBtn" onclick="queryAll()">查询</button>
-    </div>
-    <div id="loading" style="display:none;">加载中...</div>
+/* ===== 带超时的 fetch + 简单重试 ===== */
+const TIMEOUT = 5000;
+function fetchT(url,opts={},timeout=TIMEOUT){
+  const ctrl=new AbortController(),id=setTimeout(()=>ctrl.abort(),timeout);
+  return fetch(url,{...opts,signal:ctrl.signal}).finally(()=>clearTimeout(id));
+}
+async function fetchJ(url,opts={},tries=2){
+  for(let i=0;i<tries;i++){
+    try{const r=await fetchT(url,opts);if(!r.ok)throw new Error(r.status);return await r.json();}
+    catch(e){if(i===tries-1)throw e;await new Promise(r=>setTimeout(r,800*(i+1)));}
+  }
+}
 
-    <!-- 查询结果表格 -->
-    <div id="results">
-      <div class="table-container">
-        <table id="resultsTable">
-          <thead>
-            <tr>
-              <th>序号</th>
-              <th>地址</th>
-              <th>交易额</th>
-              <th>池子数量</th>
-              <th>盈亏</th>
-              <th>可用金额</th>
-              <th>持仓金额</th>
-              <th>总余额</th>
-              <th>活跃情况</th>
-              <th>持仓信息</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- 查询后动态插入行 -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+/* ===== USDC 余额 ===== */
+async function getUSDC(addr){
+  const data='0x70a08231000000000000000000000000'+addr.slice(2);
+  const payload=()=>({method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify([{jsonrpc:'2.0',method:'eth_call',
+    params:[{to:'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',data},'latest'],id:1}])});
+  try{
+    const res=await Promise.any([
+      fetchT('https://polygon-rpc.com',payload(),4000),
+      fetchT('https://rpc.ankr.com/polygon',payload(),4000)
+    ]);
+    const j=await res.json();
+    if(j[0]?.result)return (parseInt(j[0].result,16)/1e6).toFixed(2);
+  }catch{}
+  return '-';
+}
 
-  <script>
-    // 投注金额计算部分
-    const outcomesContainer = document.getElementById('outcomesContainer');
-    const addOutcomeBtn = document.getElementById('addOutcomeBtn');
-    const calculateBtn = document.getElementById('calculateBtn');
-    const calcResultDiv = document.getElementById('calcResult');
-    let outcomeCount = 0;
+/* ===== Polymarket API ===== */
+const api={
+  volume:a=>fetchJ(`https://lb-api.polymarket.com/volume?window=all&limit=1&address=${a}`).then(d=>d[0]?.amount??'-'),
+  traded:a=>fetchJ(`https://data-api.polymarket.com/traded?user=${a}`).then(d=>d.traded??'-'),
+  profit:a=>fetchJ(`https://lb-api.polymarket.com/profit?window=all&limit=1&address=${a}`).then(d=>d[0]?.amount??'-'),
+  usdc:getUSDC,
+  value:a=>fetchJ(`https://data-api.polymarket.com/value?user=${a}`).then(d=>d[0]?.value??'-'),
+  activity:async a=>{
+    try{
+      const d=await fetchJ(`https://data-api.polymarket.com/activity?user=${a}&limit=999&offset=0`);
+      if(!d.length)return{d:0,m:0,last:'-',thisMonth:false};
+      d.sort((x,y)=>y.timestamp-x.timestamp);
+      const ds=new Set,ms=new Set;
+      d.forEach(i=>{const t=new Date(i.timestamp*1e3);ds.add(t.toISOString().split('T')[0]);ms.add(t.toISOString().slice(0,7));});
+      const latest=new Date(d[0].timestamp*1e3),now=new Date();
+      const thisMonth=latest.getFullYear()===now.getFullYear()&&latest.getMonth()===now.getMonth();
+      const gap=Math.floor((Date.now()-latest)/864e5);
+      return{d:ds.size,m:ms.size,last:gap?`${gap}天前`:'今天',thisMonth};
+    }catch{return{d:0,m:0,last:'-',thisMonth:false};}
+  },
+  positions:a=>fetchJ(`https://data-api.polymarket.com/positions?user=${a}&sizeThreshold=.1&limit=50&offset=0&sortBy=CURRENT&sortDirection=DESC`)
+};
 
-    function addOutcomeRow() {
-      outcomeCount++;
-      const row = document.createElement('div');
-      row.className = 'outcome-row';
-      row.id = 'outcomeRow_' + outcomeCount;
+/* ===== 单地址查询（顺序） ===== */
+async function queryOne(addr,needPos){
+  let avail='-';try{avail=await api.usdc(addr);}catch{}
+  let safes=[];
+  try{safes=((await fetchJ(`https://safe-client.safe.global/v1/owners/${addr}/safes`).catch(()=>({137:[]})))['137']||[]).slice(0,5);}catch{}
+  if(!safes.length)return[{addr,err:'无数据'}];
 
-      const labelName = document.createElement('label');
-      labelName.innerText = '事件名称:';
-      const inputName = document.createElement('input');
-      inputName.type = 'text';
+  const rows=[];
+  for(const s of safes){
+    try{
+      const [vol,cnt,pro,hold,act,pos]=await Promise.all([
+        api.volume(s),api.traded(s),api.profit(s),
+        api.value(s),api.activity(s),needPos?api.positions(s):[]
+      ]);
+      rows.push({addr,vol,cnt,pro,avail,hold,act,pos});
+    }catch{rows.push({addr,err:'子查询失败'});}
+  }
+  return rows;
+}
 
-      const labelProb = document.createElement('label');
-      labelProb.innerText = '胜率(%):';
-      const inputProb = document.createElement('input');
-      inputProb.type = 'number';
+/* ===== 主流程 (完全串行) ===== */
+$("#run").onclick=async()=>{
+  const list=$("#input").value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!list.length)return toast('请输入地址');
+  const needPos=$("#withPos").checked,tbody=$("#tbl tbody");
+  tbody.innerHTML='';
+  $("#summary").style.display='none';
+  $("#loading").style.display='block';$("#bar").value=0;$("#barTxt").textContent='';
+  $("#run").disabled=$("#csv").disabled=true;
 
-      if (outcomeCount === 1) {
-        inputName.placeholder = '如：A';
-        inputProb.placeholder = '如：30';
-      } else if (outcomeCount === 2) {
-        inputName.placeholder = '如：B';
-        inputProb.placeholder = '如：70';
-      } else {
-        inputName.placeholder = '如：其他事件';
-        inputProb.placeholder = '如：50';
-      }
-
-      const removeBtn = document.createElement('button');
-      removeBtn.innerText = '删除';
-      removeBtn.onclick = () => outcomesContainer.removeChild(row);
-
-      row.appendChild(labelName);
-      row.appendChild(inputName);
-      row.appendChild(labelProb);
-      row.appendChild(inputProb);
-      row.appendChild(removeBtn);
-
-      outcomesContainer.appendChild(row);
+  let idx=1,fail=0;
+  for(let i=0;i<list.length;i++){
+    const addr=list[i];
+    $("#bar").value=(i/list.length)*100;$("#barTxt").textContent=`${i}/${list.length}`;
+    for(const row of await queryOne(addr,needPos)){
+      row.err?appendErr(row.err,addr)
+             :renderRow(addr,row.vol,row.cnt,row.pro,row.avail,row.hold,row.act,row.pos);
     }
+    $("#bar").value=((i+1)/list.length)*100;$("#barTxt").textContent=`${i+1} / ${list.length}`;
+  }
 
-    addOutcomeRow();
-    addOutcomeRow();
+  $("#loading").style.display='none';
+  $("#run").disabled=$("#csv").disabled=false;
+  $("#summary").textContent=`共查询 ${list.length} 个地址，成功 ${list.length-fail}，失败 ${fail}`;
+  $("#summary").style.display='block';
 
-    function calculate() {
-      calcResultDiv.innerHTML = '';
-      const totalAmountInput = document.getElementById('totalAmount').value;
-      if (!totalAmountInput || parseFloat(totalAmountInput) <= 0) {
-        alert('请先输入有效的总资金！');
-        return;
-      }
-      const T = parseFloat(totalAmountInput);
+  /* --- 内部渲染函数 --- */
+  function renderRow(a,vol,cnt,pro,avail,hold,act,pos){
+    const pNum=+pro, vNum=+vol;
+    const sign=pNum<0?'▼':'▲', cls=pNum<0?'negative':'positive';
+    const total=(+avail + +hold).toFixed(2);
+    const lastCls=act.thisMonth?'':'inactive';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
+      <td>${idx}</td><td>${clip(a)}<span class="copy" onclick="copy('${a}')">📋</span></td>
+      <td class="number">${fmtInt(vNum)}</td><td class="number">${cnt}</td>
+      <td class="number ${cls}">${sign} ${fmtInt(Math.abs(pNum))}</td>
+      <td class="number">${fmtDec(avail)}</td><td class="number">${fmtDec(hold)}</td>
+      <td class="number">${fmtDec(total)}</td>
+      <td class="number">${act.d}</td><td class="number">${act.m}</td><td class="${lastCls}">${act.last}</td>
+      <td>${
+        needPos&&pos.length
+          ? `<details><summary>共 ${pos.length}</summary>${pos.map(p=>`<div>${p.title} | 盈亏:${p.cashPnl}</div>`).join('')}</details>`
+          : '-'
+      }</td>`;
+    tbody.appendChild(tr);idx++;
+    [...tbody.rows].forEach((r,i)=>r.style.background=i%2?'#f7fafd':'');
+  }
+  function appendErr(msg,addr){
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${idx}</td><td>${clip(addr)}</td><td colspan="10" class="negative">${msg}</td>`;
+    tbody.appendChild(tr);idx++;fail++;
+  }
+};
 
-      const outcomeRows = outcomesContainer.getElementsByClassName('outcome-row');
-      if (outcomeRows.length === 0) {
-        alert('请先添加至少一个事件！');
-        return;
-      }
-
-      let outcomes = [];
-      let sumProb = 0;
-      for (let row of outcomeRows) {
-        const nameInput = row.querySelector('input[type="text"]');
-        const probInput = row.querySelector('input[type="number"]');
-        const name = nameInput.value.trim() || '未命名事件';
-        const probValue = parseFloat(probInput.value);
-        if (isNaN(probValue) || probValue <= 0) {
-          alert(`事件「${name}」的胜率无效，请输入大于0的数字。`);
-          return;
-        }
-        outcomes.push({ name, prob: probValue });
-        sumProb += probValue;
-      }
-      if (sumProb === 0) {
-        alert('所有事件胜率之和为0，无法计算！');
-        return;
-      }
-
-      let EV = 0;
-      outcomes.forEach(o => {
-        const p_i = o.prob / 100;
-        const odds = 100 / o.prob;
-        const bet = T * (o.prob / sumProb);
-        const winAmount = odds * bet;
-        const netIfWin = winAmount - T;
-        EV += p_i * netIfWin;
-
-        const line = `${o.name} 胜率: ${o.prob}% - 投注金额: ${bet.toFixed(2)} 元 - 对应赔率: ${odds.toFixed(3)} - 获胜后金额: ${winAmount.toFixed(2)} 元`;
-        const divLine = document.createElement('div');
-        divLine.textContent = line;
-        calcResultDiv.appendChild(divLine);
-      });
-
-      const evLine = document.createElement('div');
-      evLine.textContent = `期望值(EV): ${EV.toFixed(2)} 元`;
-      calcResultDiv.appendChild(evLine);
-    }
-
-    addOutcomeBtn.onclick = addOutcomeRow;
-    calculateBtn.onclick = calculate;
-
-    // 数据批量查询功能部分
-    async function queryTradeVolume(safeAddress) {
-      const url = `https://lb-api.polymarket.com/volume?window=all&limit=1&address=${safeAddress}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      return data.length > 0 ? parseFloat(data[0].amount).toFixed(2) : '-';
-    }
-
-    async function queryTradedCount(safeAddress) {
-      const url = `https://data-api.polymarket.com/traded?user=${safeAddress}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      return data.traded !== undefined ? data.traded : '-';
-    }
-
-    async function queryProfit(safeAddress) {
-      const url = `https://lb-api.polymarket.com/profit?window=all&limit=1&address=${safeAddress}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      return data.length > 0 ? parseFloat(data[0].amount).toFixed(2) : '-';
-    }
-
-    async function queryUSDCBalanceForAddress(safeAddress) {
-      const rpcUrl = 'https://polygon-rpc.com';
-      const contractAddress = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
-      const data = '0x70a08231000000000000000000000000' + safeAddress.slice(2);
-      const request = {
-        jsonrpc: '2.0',
-        method: 'eth_call',
-        params: [{ to: contractAddress, data: data }, 'latest'],
-        id: 1
-      };
-      const response = await fetch(rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([request])
-      });
-      const resultArr = await response.json();
-      const result = resultArr[0]?.result || '0x0';
-      const balance = parseInt(result, 16) / 1e6;
-      return balance.toFixed(2) + ' USDC';
-    }
-
-    async function queryHoldingValue(safeAddress) {
-      const url = `https://data-api.polymarket.com/value?user=${safeAddress}`;
-      const response = await fetch(url);
-      const data = await response.json();
-      return data.length > 0 && data[0].value !== undefined ? parseFloat(data[0].value).toFixed(2) : '-';
-    }
-
-    async function queryActivity(safeAddress) {
-      const url = `https://data-api.polymarket.com/activity?user=${safeAddress}&limit=999&offset=0`;
-      const response = await fetch(url);
-      const data = await response.json();
-      if (!Array.isArray(data) || data.length === 0) return { days: 0, months: 0, lastActive: '-' };
-
-      data.sort((a, b) => b.timestamp - a.timestamp);
-
-      const activeDaysSet = new Set();
-      const activeMonthsSet = new Set();
-      data.forEach(item => {
-        const date = new Date(item.timestamp * 1000);
-        activeDaysSet.add(date.toISOString().split('T')[0]);
-        activeMonthsSet.add(date.toISOString().slice(0, 7));
-      });
-
-      const lastActiveDate = new Date(data[0].timestamp * 1000);
-      const now = new Date();
-      const diffDays = Math.floor((now - lastActiveDate) / (1000 * 60 * 60 * 24));
-      const lastActive = diffDays === 0 ? '今天' : `${diffDays}天前`;
-
-      return { days: activeDaysSet.size, months: activeMonthsSet.size, lastActive };
-    }
-
-    async function queryPositions(safeAddress) {
-      const url = `https://data-api.polymarket.com/positions?user=${safeAddress}&sizeThreshold=.1&limit=50&offset=0&sortBy=CURRENT&sortDirection=DESC`;
-      const response = await fetch(url);
-      const data = await response.json();
-      return data;
-    }
-
-    async function queryAll() {
-      const loadingDiv = document.getElementById('loading');
-      const queryBtn = document.getElementById('queryBtn');
-      const tableBody = document.querySelector('#resultsTable tbody');
-      const checkPositions = document.getElementById('checkPositions').checked;
-
-      loadingDiv.style.display = 'block';
-      queryBtn.disabled = true;
-
-      const input = document.getElementById('ownerAddresses').value.trim();
-      const owners = input.split('\n').map(addr => addr.trim()).filter(addr => addr !== '');
-      if (owners.length === 0) {
-        alert('请输入有效的地址！');
-        loadingDiv.style.display = 'none';
-        queryBtn.disabled = false;
-        return;
-      }
-
-      tableBody.innerHTML = '';
-      let serial = 1;
-
-      for (const ownerAddress of owners) {
-        const safesUrl = `https://safe-client.safe.global/v1/owners/${ownerAddress}/safes`;
-        try {
-          const response = await fetch(safesUrl);
-          if (!response.ok) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${serial++}</td><td>${ownerAddress}</td><td colspan="8" class="error">Safe 查询失败: ${response.statusText}</td>`;
-            tableBody.appendChild(tr);
-            continue;
-          }
-
-          const safeData = await response.json();
-          const chain137Safes = safeData['137'];
-          if (!Array.isArray(chain137Safes) || chain137Safes.length === 0) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td>${serial++}</td><td>${ownerAddress}</td><td colspan="8" class="error">无数据</td>`;
-            tableBody.appendChild(tr);
-            continue;
-          }
-
-          for (const safeAddress of chain137Safes) {
-            const tradeVolume = await queryTradeVolume(safeAddress);
-            const tradedCount = await queryTradedCount(safeAddress);
-            const profit = await queryProfit(safeAddress);
-            const available = await queryUSDCBalanceForAddress(safeAddress);
-            const holding = await queryHoldingValue(safeAddress);
-            const activity = await queryActivity(safeAddress);
-
-            // 查询持仓信息
-            const positions = await queryPositions(safeAddress);
-
-            const total = (parseFloat(available) + parseFloat(holding)).toFixed(2);
-            const activityCell = `天: ${activity.days}<br>月: ${activity.months}<br>最后活跃: ${activity.lastActive}`;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-              <td>${serial++}</td>
-              <td>${ownerAddress}</td>
-              <td>${tradeVolume}</td>
-              <td>${tradedCount}</td>
-              <td>${profit}</td>
-              <td>${available}</td>
-              <td>${holding}</td>
-              <td>${total} USDC</td>
-              <td>${activityCell}</td>
-              <td style="text-align:left;">
-                ${checkPositions ? positions.map(position => `
-                  <div>
-                    <img src="${position.icon}" alt="${position.title}" class="icon-img" />
-                    <strong>${position.title}</strong><br>
-                    初始价值：${position.initialValue} <br>
-                    当前价值：${position.currentValue} <br>
-                    盈亏金额：${position.cashPnl} <br>
-                    结束日期：${position.endDate}
-                  </div>
-                  `).join('<br>') : '-'}
-              </td>
-            `;
-            tableBody.appendChild(tr);
-          }
-        } catch (err) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${serial++}</td><td>${ownerAddress}</td><td colspan="8" class="error">Safe 查询异常: ${err.toString()}</td>`;
-          tableBody.appendChild(tr);
-        }
-      }
-
-      loadingDiv.style.display = 'none';
-      queryBtn.disabled = false;
-    }
-  </script>
+/* ===== 导出 CSV ===== */
+$("#csv").onclick=()=>{
+  const rows=[...document.querySelectorAll('#tbl tr')].map(r=>[...r.children].map(td=>td.textContent.trim()));
+  if(rows.length<=1)return toast('暂无数据');
+  const blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`polymarket_${Date.now()}.csv`;a.click();URL.revokeObjectURL(url);
+};
+</script>
 </body>
 </html>
