@@ -5,100 +5,39 @@
 <title>Polymarket 数据批量查询</title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <style>
-/* ========= 全局色板 ========= */
-:root{
-  --c-primary:#0078d7;--c-primary-dark:#005fa3;
-  --c-bg:#fafafa;--c-card:#fff;--c-border:#e5e7eb;
-  --c-text:#222;--c-sub:#555;--c-green:#16a34a;--c-red:#e11d48;
-}
+:root{--c-primary:#0078d7;--c-primary-dark:#005fa3;--c-bg:#fafafa;--c-card:#fff;--c-border:#e5e7eb;
+      --c-text:#222;--c-sub:#555;--c-green:#16a34a;--c-red:#e11d48;}
 *{box-sizing:border-box;margin:0;padding:0}
-
-/* ========= 基础排版 ========= */
-body{
-  font-family:-apple-system,Segoe UI,PingFang SC,Helvetica,Arial,sans-serif;
-  background:var(--c-bg);color:var(--c-text);line-height:1.6;padding:24px;
-}
+body{font-family:-apple-system,Segoe UI,PingFang SC,Helvetica,Arial,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.6;padding:24px}
 h1{text-align:center;font-size:28px;margin-bottom:24px;color:var(--c-primary)}
-h2{
-  text-align:center;font-size:22px;margin:40px 0 12px;color:var(--c-primary);position:relative
-}
-h2::after{
-  content:'';display:block;width:80px;height:2px;background:var(--c-primary);
-  margin:8px auto 0;border-radius:1px
-}
+h2{text-align:center;font-size:22px;margin:40px 0 12px;color:var(--c-primary);position:relative}
+h2::after{content:'';display:block;width:80px;height:2px;background:var(--c-primary);margin:8px auto 0;border-radius:1px}
 .desc{max-width:780px;margin:0 auto 20px;text-align:center;font-size:14px;color:var(--c-sub)}
-
-/* ========= 提醒 ========= */
-.note{
-  text-align:center;font-size:14px;font-weight:600;
-  color:var(--c-red);margin:4px 0 12px;
-}
-
-/* ========= 卡片 ========= */
-.card{
-  max-width:1000px;margin:0 auto 24px;background:var(--c-card);
-  border:1px solid var(--c-border);border-radius:8px;
-  box-shadow:0 4px 10px rgba(0,0,0,.05);padding:24px
-}
-
-/* ========= 表单 & 按钮 ========= */
-textarea{
-  width:100%;min-height:120px;resize:vertical;padding:10px;
-  border:1px solid var(--c-border);border-radius:6px
-}
-button{
-  padding:10px 18px;font-size:15px;border:none;border-radius:6px;
-  background:var(--c-primary);color:#fff;margin:8px;cursor:pointer;transition:.2s
-}
+.note{text-align:center;font-size:14px;font-weight:600;color:var(--c-red);margin:4px 0 12px}
+.card{max-width:1000px;margin:0 auto 24px;background:var(--c-card);border:1px solid var(--c-border);border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:24px}
+textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border:1px solid var(--c-border);border-radius:6px}
+button{padding:10px 18px;font-size:15px;border:none;border-radius:6px;background:var(--c-primary);color:#fff;margin:8px;cursor:pointer;transition:.2s}
 button:hover:not(:disabled){background:var(--c-primary-dark);transform:translateY(-2px)}
 button:disabled{background:#9ca3af}
 .center{text-align:center}
-
-/* ========= 进度条 ========= */
 #loading{margin-top:12px;text-align:center;color:var(--c-primary)}
-progress{
-  width:100%;height:8px;border:none;border-radius:4px;background:var(--c-border)
-}
+progress{width:100%;height:8px;border:none;border-radius:4px;background:var(--c-border)}
 progress::-webkit-progress-value{background:var(--c-primary)}
-
-/* ========= 提要框 ========= */
-#summary{
-  display:none;margin:18px 0 12px;padding:10px 12px;background:#e8f1ff;
-  border-left:4px solid var(--c-primary);border-radius:4px;color:var(--c-primary);font-size:14px
-}
-
-/* ========= 表格 ========= */
+#summary{display:none;margin:18px 0 12px;padding:10px 12px;background:#e8f1ff;border-left:4px solid var(--c-primary);border-radius:4px;color:var(--c-primary);font-size:14px}
 .table-wrap{overflow-x:auto}
 table{width:100%;min-width:950px;border-collapse:collapse;background:var(--c-card)}
 th,td{padding:14px 10px;border-bottom:1px solid var(--c-border);font-size:14px}
-th{
-  background:var(--c-primary);color:#fff;text-align:center;
-  position:sticky;top:0;z-index:2
-}
+th{background:var(--c-primary);color:#fff;text-align:center;position:sticky;top:0;z-index:2}
 tbody tr:nth-child(even){background:#f7fafd}
 td.number{text-align:right}
-
-/* ——★  粘住列分层：thead / tbody ★—— */
 thead th:nth-child(1){position:sticky;left:0;background:var(--c-primary);z-index:3}
 thead th:nth-child(2){position:sticky;left:46px;background:var(--c-primary);z-index:3}
 tbody td:nth-child(1){position:sticky;left:0;background:var(--c-card);z-index:1}
 tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index:1}
-
-/* ========= 颜色提示 ========= */
-.positive{color:var(--c-green)}
-.negative{color:var(--c-red)}
-.inactive{color:var(--c-red)}
-
-/* ========= 复制按钮 & Toast ========= */
+.positive{color:var(--c-green)}.negative{color:var(--c-red)}.inactive{color:var(--c-red)}
 .copy{margin-left:4px;font-size:14px;color:var(--c-sub);cursor:pointer}
 .copy:hover{color:var(--c-primary)}
-.toast{
-  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-  background:#333;color:#fff;padding:6px 12px;border-radius:4px;
-  font-size:14px;opacity:0;transition:.3s
-}
-
-/* ========= 页脚 ========= */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:4px;font-size:14px;opacity:0;transition:.3s}
 .footer{text-align:center;font-size:14px;color:var(--c-sub);margin-top:40px}
 .footer a{color:var(--c-primary);text-decoration:none}
 </style>
@@ -110,28 +49,21 @@ tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index
 <p class="desc">粘贴地址（每行一个），系统按顺序逐个查询并实时更新结果。</p>
 
 <div class="card">
-  <textarea id="input" placeholder=""></textarea>
-
-  <!-- 查询前提醒 -->
+  <textarea id="input"></textarea>
   <p class="note">提示：查询前请将 VPN 切换到「全局模式」</p>
-
   <div class="center" style="margin-top:6px;">
     <button id="run">查询</button>
     <button id="csv" disabled>导出 CSV</button>
   </div>
 
-  <div id="loading" style="display:none;">
-    <progress id="bar" value="0" max="100"></progress>
-    <div id="barTxt"></div>
-  </div>
-
+  <div id="loading" style="display:none;"><progress id="bar" value="0" max="100"></progress><div id="barTxt"></div></div>
   <div id="summary"></div>
 
   <div class="table-wrap">
     <table id="tbl">
       <thead>
         <tr>
-          <th>#</th><th>地址（Safe）</th>
+          <th>#</th><th>地址</th>
           <th class="number">交易额</th><th class="number">池子数</th>
           <th class="number">盈亏</th><th class="number">可用</th>
           <th class="number">持仓</th><th class="number">总余额</th>
@@ -147,7 +79,6 @@ tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index
 <div id="toast" class="toast"></div>
 
 <script>
-/* ========= 工具 ========= */
 const $=s=>document.querySelector(s);
 const fmtInt=n=>isNaN(+n)?'-':Math.round(+n).toLocaleString('en-US');
 const fmtDec=n=>isNaN(+n)?'-':(+n).toLocaleString('en-US',{minimumFractionDigits:(+n%1?2:0)});
@@ -155,7 +86,7 @@ const clip=a=>a.length>12?`${a.slice(0,6)}…${a.slice(-4)}`:a;
 function toast(t){const el=$("#toast");el.textContent=t;el.style.opacity=1;setTimeout(()=>el.style.opacity=0,1500);}
 function copy(addr){navigator.clipboard.writeText(addr).then(()=>toast('已复制'));}
 
-/* ========= fetch with timeout ========= */
+/* fetch with timeout */
 const TIMEOUT=5000;
 function fetchT(url,opts={},timeout=TIMEOUT){
   const c=new AbortController(),tid=setTimeout(()=>c.abort(),timeout);
@@ -163,18 +94,12 @@ function fetchT(url,opts={},timeout=TIMEOUT){
 }
 async function fetchJ(url,opts={},tries=2){
   for(let i=0;i<tries;i++){
-    try{
-      const r=await fetchT(url,opts);
-      if(!r.ok)throw new Error(r.status);
-      return await r.json();
-    }catch(e){
-      if(i===tries-1)throw e;
-      await new Promise(res=>setTimeout(res,800*(i+1)));
-    }
+    try{const r=await fetchT(url,opts);if(!r.ok)throw new Error(r.status);return await r.json();}
+    catch(e){if(i===tries-1)throw e;await new Promise(res=>setTimeout(res,800*(i+1)));}
   }
 }
 
-/* ========= USDC 余额 ========= */
+/* USDC balance  (Polygon USDC contract balanceOf) */
 async function getUSDC(addr){
   const data='0x70a08231000000000000000000000000'+addr.slice(2);
   const payload=()=>({
@@ -193,28 +118,20 @@ async function getUSDC(addr){
   return '-';
 }
 
-/* ========= Polymarket API ========= */
+/* Polymarket API helpers */
 const api={
-  volume:a=>fetchJ(`https://lb-api.polymarket.com/volume?window=all&limit=1&address=${a}`)
-            .then(d=>d[0]?.amount??'-'),
-  traded:a=>fetchJ(`https://data-api.polymarket.com/traded?user=${a}`)
-            .then(d=>d.traded??'-'),
-  profit:a=>fetchJ(`https://lb-api.polymarket.com/profit?window=all&limit=1&address=${a}`)
-            .then(d=>d[0]?.amount??'-'),
+  volume:a=>fetchJ(`https://lb-api.polymarket.com/volume?window=all&limit=1&address=${a}`).then(d=>d[0]?.amount??'-'),
+  traded:a=>fetchJ(`https://data-api.polymarket.com/traded?user=${a}`).then(d=>d.traded??'-'),
+  profit:a=>fetchJ(`https://lb-api.polymarket.com/profit?window=all&limit=1&address=${a}`).then(d=>d[0]?.amount??'-'),
   usdc:getUSDC,
-  value:a=>fetchJ(`https://data-api.polymarket.com/value?user=${a}`)
-            .then(d=>d[0]?.value??'-'),
+  value:a=>fetchJ(`https://data-api.polymarket.com/value?user=${a}`).then(d=>d[0]?.value??'-'),
   activity:async a=>{
     try{
       const d=await fetchJ(`https://data-api.polymarket.com/activity?user=${a}&limit=999&offset=0`);
       if(!d.length)return{d:0,m:0,last:'-',thisMonth:false};
       d.sort((x,y)=>y.timestamp-x.timestamp);
       const ds=new Set,ms=new Set;
-      d.forEach(i=>{
-        const t=new Date(i.timestamp*1e3);
-        ds.add(t.toISOString().split('T')[0]);
-        ms.add(t.toISOString().slice(0,7));
-      });
+      d.forEach(i=>{const t=new Date(i.timestamp*1e3);ds.add(t.toISOString().split('T')[0]);ms.add(t.toISOString().slice(0,7));});
       const latest=new Date(d[0].timestamp*1e3),now=new Date();
       const thisMonth=latest.getFullYear()===now.getFullYear()&&latest.getMonth()===now.getMonth();
       const gap=Math.floor((Date.now()-latest)/864e5);
@@ -223,22 +140,21 @@ const api={
   }
 };
 
-/* ========= 单地址：Safe 维度 ========= */
-async function queryOne(ownerAddr){
+/*  Owner -> each Safe row */
+async function queryOne(owner){
   let safes=[];
   try{
-    const res=await fetchJ(`https://safe-client.safe.global/v1/owners/${ownerAddr}/safes`).catch(()=>({137:[]}));
+    const res=await fetchJ(`https://safe-client.safe.global/v1/owners/${owner}/safes`).catch(()=>({137:[]}));
     safes=(res['137']||[]).slice(0,5);
   }catch{}
-
-  if(!safes.length)return[{addr:ownerAddr,err:'无数据'}];
+  if(!safes.length)return[{addr:owner,err:'无数据'}];
 
   const rows=[];
   for(const safe of safes){
     try{
       const [vol,cnt,pro,hold,act,avail]=await Promise.all([
         api.volume(safe),api.traded(safe),api.profit(safe),
-        api.value(safe),api.activity(safe),api.usdc(safe)   // Safe 余额
+        api.value(safe),api.activity(safe),api.usdc(safe)   // 可用=Safe 余额
       ]);
       rows.push({addr:safe,vol,cnt,pro,avail,hold,act});
     }catch{rows.push({addr:safe,err:'子查询失败'});}
@@ -246,31 +162,27 @@ async function queryOne(ownerAddr){
   return rows;
 }
 
-/* ========= 主流程 ========= */
+/* ===== 主流程 ===== */
 $("#run").onclick=async()=>{
   const list=$("#input").value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
   if(!list.length)return toast('请输入地址');
 
-  const tbody=$("#tbl tbody");
-  tbody.innerHTML='';
+  const tbody=$("#tbl tbody");tbody.innerHTML='';
   $("#summary").style.display='none';
-  $("#loading").style.display='block';
-  $("#bar").value=0;$("#barTxt").textContent='';
+  $("#loading").style.display='block';$("#bar").value=0;$("#barTxt").textContent='';
   $("#run").disabled=$("#csv").disabled=true;
 
   let idx=1,fail=0;
   for(let i=0;i<list.length;i++){
     const addr=list[i];
-    $("#bar").value=(i/list.length)*100;
-    $("#barTxt").textContent=`${i}/${list.length}`;
+    $("#bar").value=(i/list.length)*100;$("#barTxt").textContent=`${i}/${list.length}`;
 
     for(const row of await queryOne(addr)){
       row.err?appendErr(row.err,row.addr)
              :renderRow(row.addr,row.vol,row.cnt,row.pro,row.avail,row.hold,row.act);
     }
 
-    $("#bar").value=((i+1)/list.length)*100;
-    $("#barTxt").textContent=`${i+1}/${list.length}`;
+    $("#bar").value=((i+1)/list.length)*100;$("#barTxt").textContent=`${i+1}/${list.length}`;
   }
 
   $("#loading").style.display='none';
@@ -278,20 +190,16 @@ $("#run").onclick=async()=>{
   $("#summary").textContent=`共查询 ${list.length} 个输入地址，生成 ${idx-1} 行数据，失败 ${fail}`;
   $("#summary").style.display='block';
 
-  /* —— 渲染 —— */
   function renderRow(a,vol,cnt,pro,avail,hold,act){
-    const pNum=+pro;
-    const sign=pNum<0?'▼':'▲',cls=pNum<0?'negative':'positive';
+    const p=+pro,sign=p<0?'▼':'▲',cls=p<0?'negative':'positive';
     const total=(+avail + +hold).toFixed(2);
     const lastCls=act.thisMonth?'':'inactive';
-
-    const tr=document.createElement('tr');
-    tr.innerHTML=`
+    const tr=document.createElement('tr');tr.innerHTML=`
       <td>${idx}</td>
       <td>${clip(a)}<span class="copy" onclick="copy('${a}')">📋</span></td>
       <td class="number">${fmtInt(vol)}</td>
       <td class="number">${cnt}</td>
-      <td class="number ${cls}">${sign} ${fmtInt(Math.abs(pNum))}</td>
+      <td class="number ${cls}">${sign} ${fmtInt(Math.abs(p))}</td>
       <td class="number">${fmtDec(avail)}</td>
       <td class="number">${fmtDec(hold)}</td>
       <td class="number">${fmtDec(total)}</td>
@@ -301,21 +209,20 @@ $("#run").onclick=async()=>{
     tbody.appendChild(tr);idx++;
     [...tbody.rows].forEach((r,i)=>r.style.background=i%2?'#f7fafd':'');
   }
-  function appendErr(msg,badAddr){
+  function appendErr(msg,bad){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${idx}</td><td>${clip(badAddr)}</td><td colspan="9" class="negative">${msg}</td>`;
+    tr.innerHTML=`<td>${idx}</td><td>${clip(bad)}</td><td colspan="9" class="negative">${msg}</td>`;
     tbody.appendChild(tr);idx++;fail++;
   }
 };
 
-/* ========= 导出 CSV ========= */
+/* 导出 CSV */
 $("#csv").onclick=()=>{
   const rows=[...document.querySelectorAll('#tbl tr')].map(r=>[...r.children].map(td=>td.textContent.trim()));
   if(rows.length<=1)return toast('暂无数据');
   const blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download=`polymarket_${Date.now()}.csv`;a.click();
-  URL.revokeObjectURL(url);
+  a.href=url;a.download=`polymarket_${Date.now()}.csv`;a.click();URL.revokeObjectURL(url);
 };
 </script>
 </body>
