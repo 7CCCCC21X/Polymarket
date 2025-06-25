@@ -14,30 +14,47 @@ h2{text-align:center;font-size:22px;margin:40px 0 12px;color:var(--c-primary);po
 h2::after{content:'';display:block;width:80px;height:2px;background:var(--c-primary);margin:8px auto 0;border-radius:1px}
 .desc{max-width:780px;margin:0 auto 20px;text-align:center;font-size:14px;color:var(--c-sub)}
 .note{text-align:center;font-size:14px;font-weight:600;color:var(--c-red);margin:4px 0 12px}
+
 .card{max-width:1000px;margin:0 auto 24px;background:var(--c-card);border:1px solid var(--c-border);border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:24px}
 textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border:1px solid var(--c-border);border-radius:6px}
+
 button{padding:10px 18px;font-size:15px;border:none;border-radius:6px;background:var(--c-primary);color:#fff;margin:8px;cursor:pointer;transition:.2s}
 button:hover:not(:disabled){background:var(--c-primary-dark);transform:translateY(-2px)}
 button:disabled{background:#9ca3af}
 .center{text-align:center}
+
 #loading{margin-top:12px;text-align:center;color:var(--c-primary)}
 progress{width:100%;height:8px;border:none;border-radius:4px;background:var(--c-border)}
 progress::-webkit-progress-value{background:var(--c-primary)}
-#summary{display:none;margin:18px 0 12px;padding:10px 12px;background:#e8f1ff;border-left:4px solid var(--c-primary);border-radius:4px;color:var(--c-primary);font-size:14px}
+
+#summary{display:none;margin:18px 0 12px;padding:10px 12px;background:#e8f1ff;border-left:4px solid var(--c-primary);
+         border-radius:4px;color:var(--c-primary);font-size:14px}
+
+/* 表格样式：网格+悬停高亮+居中 */
 .table-wrap{overflow-x:auto}
-table{width:100%;min-width:950px;border-collapse:collapse;background:var(--c-card)}
-th,td{padding:14px 10px;border-bottom:1px solid var(--c-border);font-size:14px}
-th{background:var(--c-primary);color:#fff;text-align:center;position:sticky;top:0;z-index:2}
+table{width:100%;min-width:950px;border-collapse:collapse;background:var(--c-card);border:1px solid var(--c-border)}
+th,td{padding:14px 10px;border:1px solid var(--c-border);font-size:14px;text-align:center}
+th{background:var(--c-primary);color:#fff;position:sticky;top:0;z-index:2}
 tbody tr:nth-child(even){background:#f7fafd}
-td.number{text-align:right}
+tbody tr:hover{background:#e8f6ff}
+
+/* 粘住列 */
 thead th:nth-child(1){position:sticky;left:0;background:var(--c-primary);z-index:3}
 thead th:nth-child(2){position:sticky;left:46px;background:var(--c-primary);z-index:3}
 tbody td:nth-child(1){position:sticky;left:0;background:var(--c-card);z-index:1}
 tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index:1}
-.positive{color:var(--c-green)}.negative{color:var(--c-red)}.inactive{color:var(--c-red)}
+
+/* 状态色 */
+.positive{color:var(--c-green)}
+.negative{color:var(--c-red)}
+.inactive{color:var(--c-red)}
+
+/* 复制按钮 & Toast */
 .copy{margin-left:4px;font-size:14px;color:var(--c-sub);cursor:pointer}
 .copy:hover{color:var(--c-primary)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:4px;font-size:14px;opacity:0;transition:.3s}
+
+/* 页脚 */
 .footer{text-align:center;font-size:14px;color:var(--c-sub);margin-top:40px}
 .footer a{color:var(--c-primary);text-decoration:none}
 </style>
@@ -64,10 +81,10 @@ tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index
       <thead>
         <tr>
           <th>#</th><th>地址</th>
-          <th class="number">交易额</th><th class="number">池子数</th>
-          <th class="number">盈亏</th><th class="number">可用</th>
-          <th class="number">持仓</th><th class="number">总余额</th>
-          <th class="number">日活</th><th class="number">月活</th><th>最后活跃</th>
+          <th>交易额</th><th>池子数</th>
+          <th>盈亏</th><th>可用</th>
+          <th>持仓</th><th>总余额</th>
+          <th>日活</th><th>月活</th><th>最后活跃</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -79,6 +96,7 @@ tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index
 <div id="toast" class="toast"></div>
 
 <script>
+/* 工具 */
 const $=s=>document.querySelector(s);
 const fmtInt=n=>isNaN(+n)?'-':Math.round(+n).toLocaleString('en-US');
 const fmtDec=n=>isNaN(+n)?'-':(+n).toLocaleString('en-US',{minimumFractionDigits:(+n%1?2:0)});
@@ -99,7 +117,7 @@ async function fetchJ(url,opts={},tries=2){
   }
 }
 
-/* USDC balance  (Polygon USDC contract balanceOf) */
+/* USDC balance, only polygon-rpc.com */
 async function getUSDC(addr){
   const data='0x70a08231000000000000000000000000'+addr.slice(2);
   const payload=()=>({
@@ -108,10 +126,7 @@ async function getUSDC(addr){
       params:[{to:'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',data},'latest'],id:1}])
   });
   try{
-    const res=await Promise.any([
-      fetchT('https://polygon-rpc.com',payload(),4000),
-      fetchT('https://rpc.ankr.com/polygon',payload(),4000)
-    ]);
+    const res=await fetchT('https://polygon-rpc.com',payload(),4000);
     const j=await res.json();
     if(j[0]?.result)return (parseInt(j[0].result,16)/1e6).toFixed(2);
   }catch{}
@@ -140,29 +155,29 @@ const api={
   }
 };
 
-/*  Owner -> each Safe row */
+/* Owner -> Safe rows, 显示 owner 地址 */
 async function queryOne(owner){
   let safes=[];
   try{
     const res=await fetchJ(`https://safe-client.safe.global/v1/owners/${owner}/safes`).catch(()=>({137:[]}));
     safes=(res['137']||[]).slice(0,5);
   }catch{}
-  if(!safes.length)return[{addr:owner,err:'无数据'}];
+  if(!safes.length)return[{disp:owner,err:'无数据'}];
 
   const rows=[];
   for(const safe of safes){
     try{
       const [vol,cnt,pro,hold,act,avail]=await Promise.all([
         api.volume(safe),api.traded(safe),api.profit(safe),
-        api.value(safe),api.activity(safe),api.usdc(safe)   // 可用=Safe 余额
+        api.value(safe),api.activity(safe),api.usdc(safe)
       ]);
-      rows.push({addr:safe,vol,cnt,pro,avail,hold,act});
-    }catch{rows.push({addr:safe,err:'子查询失败'});}
+      rows.push({disp:owner,vol,cnt,pro,avail,hold,act});
+    }catch{rows.push({disp:owner,err:'子查询失败'});}
   }
   return rows;
 }
 
-/* ===== 主流程 ===== */
+/* 主流程 */
 $("#run").onclick=async()=>{
   const list=$("#input").value.trim().split('\n').map(s=>s.trim()).filter(Boolean);
   if(!list.length)return toast('请输入地址');
@@ -174,12 +189,12 @@ $("#run").onclick=async()=>{
 
   let idx=1,fail=0;
   for(let i=0;i<list.length;i++){
-    const addr=list[i];
+    const owner=list[i];
     $("#bar").value=(i/list.length)*100;$("#barTxt").textContent=`${i}/${list.length}`;
 
-    for(const row of await queryOne(addr)){
-      row.err?appendErr(row.err,row.addr)
-             :renderRow(row.addr,row.vol,row.cnt,row.pro,row.avail,row.hold,row.act);
+    for(const row of await queryOne(owner)){
+      row.err ? appendErr(row.err,row.disp) :
+                renderRow(row.disp,row.vol,row.cnt,row.pro,row.avail,row.hold,row.act);
     }
 
     $("#bar").value=((i+1)/list.length)*100;$("#barTxt").textContent=`${i+1}/${list.length}`;
@@ -190,28 +205,28 @@ $("#run").onclick=async()=>{
   $("#summary").textContent=`共查询 ${list.length} 个输入地址，生成 ${idx-1} 行数据，失败 ${fail}`;
   $("#summary").style.display='block';
 
-  function renderRow(a,vol,cnt,pro,avail,hold,act){
+  function renderRow(addr,vol,cnt,pro,avail,hold,act){
     const p=+pro,sign=p<0?'▼':'▲',cls=p<0?'negative':'positive';
     const total=(+avail + +hold).toFixed(2);
     const lastCls=act.thisMonth?'':'inactive';
-    const tr=document.createElement('tr');tr.innerHTML=`
+    const tr=document.createElement('tr');
+    tr.innerHTML=`
       <td>${idx}</td>
-      <td>${clip(a)}<span class="copy" onclick="copy('${a}')">📋</span></td>
-      <td class="number">${fmtInt(vol)}</td>
-      <td class="number">${cnt}</td>
-      <td class="number ${cls}">${sign} ${fmtInt(Math.abs(p))}</td>
-      <td class="number">${fmtDec(avail)}</td>
-      <td class="number">${fmtDec(hold)}</td>
-      <td class="number">${fmtDec(total)}</td>
-      <td class="number">${act.d}</td>
-      <td class="number">${act.m}</td>
+      <td>${clip(addr)}<span class="copy" onclick="copy('${addr}')">📋</span></td>
+      <td>${fmtInt(vol)}</td>
+      <td>${cnt}</td>
+      <td class="${cls}">${sign} ${fmtInt(Math.abs(p))}</td>
+      <td>${fmtDec(avail)}</td>
+      <td>${fmtDec(hold)}</td>
+      <td>${fmtDec(total)}</td>
+      <td>${act.d}</td>
+      <td>${act.m}</td>
       <td class="${lastCls}">${act.last}</td>`;
     tbody.appendChild(tr);idx++;
-    [...tbody.rows].forEach((r,i)=>r.style.background=i%2?'#f7fafd':'');
   }
-  function appendErr(msg,bad){
+  function appendErr(msg,addr){
     const tr=document.createElement('tr');
-    tr.innerHTML=`<td>${idx}</td><td>${clip(bad)}</td><td colspan="9" class="negative">${msg}</td>`;
+    tr.innerHTML=`<td>${idx}</td><td>${clip(addr)}</td><td colspan="9" class="negative">${msg}</td>`;
     tbody.appendChild(tr);idx++;fail++;
   }
 };
@@ -222,7 +237,8 @@ $("#csv").onclick=()=>{
   if(rows.length<=1)return toast('暂无数据');
   const blob=new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv'});
   const url=URL.createObjectURL(blob);const a=document.createElement('a');
-  a.href=url;a.download=`polymarket_${Date.now()}.csv`;a.click();URL.revokeObjectURL(url);
+  a.href=url;a.download=`polymarket_${Date.now()}.csv`;a.click();
+  URL.revokeObjectURL(url);
 };
 </script>
 </body>
