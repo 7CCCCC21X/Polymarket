@@ -155,13 +155,25 @@ const api={
   }
 };
 
-/* Owner -> Safe rows, 显示 owner 地址 */
+/* Owner -> Safe rows, 显示 owner 地址（改为链级接口：/v1/chains/137/owners/{owner}/safes） */
 async function queryOne(owner){
   let safes=[];
   try{
-    const res=await fetchJ(`https://safe-client.safe.global/v1/owners/${owner}/safes`).catch(()=>({137:[]}));
-    safes=(res['137']||[]).slice(0,5);
+    // 新接口（Polygon/137）：示例固定地址为
+    // https://safe-client.safe.global/v1/chains/137/owners/0xAee02FcF9A7A838b797153bd7494C023fC5d1f44/safes
+    // 这里保持按输入 owner 动态查询：
+    const url=`https://safe-client.safe.global/v1/chains/137/owners/${owner}/safes`;
+    const res=await fetchJ(url).catch(()=>({safes:[]}));
+
+    // 兼容多种返回结构（新：{safes:[...]}; 旧：{137:[...]}; 或直接数组）
+    safes = Array.isArray(res?.safes) ? res.safes
+          : Array.isArray(res)        ? res
+          : Array.isArray(res?.['137']) ? res['137']
+          : Array.isArray(res?.safes?.['137']) ? res.safes['137']
+          : [];
+    safes = safes.slice(0,5);
   }catch{}
+
   if(!safes.length)return[{disp:owner,err:'无数据'}];
 
   const rows=[];
