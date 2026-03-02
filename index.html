@@ -117,20 +117,80 @@ async function fetchJ(url,opts={},tries=2){
   }
 }
 
-/* USDC balance, only polygon-rpc.com */
+/* =========================
+   USDC balance (Polygon RPC 备用接口)
+   其它功能保持不变
+   ========================= */
+const POLYGON_RPCS = [
+  "https://polygon.drpc.org",
+  "https://polygon.publicnode.com",
+  "https://polygon-bor-rpc.publicnode.com",
+  "https://1rpc.io/matic",
+  "https://tenderly.rpc.polygon.community",
+  "https://rpc.ankr.com/polygon",
+];
+
+const RPC_TIMEOUT = 3500;
+let preferredPolygonRpc = POLYGON_RPCS[0];
+
+async function rpcEthCall(payload, timeout = RPC_TIMEOUT){
+  const urls = [preferredPolygonRpc, ...POLYGON_RPCS.filter(u=>u!==preferredPolygonRpc)];
+
+  for(const url of urls){
+    try{
+      const res = await fetchT(
+        url,
+        {
+          method:"POST",
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(payload),
+        },
+        timeout
+      );
+      if(!res.ok) throw new Error(res.status);
+
+      const j = await res.json();
+      const result = Array.isArray(j) ? j?.[0]?.result : j?.result;
+
+      if(typeof result === 'string' && result.startsWith('0x')){
+        preferredPolygonRpc = url; // 记住成功的 RPC
+        return result;
+      }
+    }catch(_){
+      // 换下一个
+    }
+  }
+  return null;
+}
+
+/* USDC (Polygon PoS) */
 async function getUSDC(addr){
   const data='0x70a08231000000000000000000000000'+addr.slice(2);
-  const payload=()=>({
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify([{jsonrpc:'2.0',method:'eth_call',
-      params:[{to:'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',data},'latest'],id:1}])
-  });
+
+  const payload = {
+    jsonrpc:'2.0',
+    id:1,
+    method:'eth_call',
+    params:[{to:'0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',data},'latest']
+  };
+
   try{
-    const res=await fetchT('https://polygon-rpc.com',payload(),4000);
-    const j=await res.json();
-    if(j[0]?.result)return (parseInt(j[0].result,16)/1e6).toFixed(2);
-  }catch{}
-  return '-';
+    const hex = await rpcEthCall(payload, 4000);
+    if(!hex) return '-';
+
+    // 用 BigInt 避免 parseInt 溢出；USDC 6 decimals
+    const raw = (hex === '0x' ? 0n : BigInt(hex));
+    const SCALE = 1000000n;
+
+    // 四舍五入到 2 位小数： (raw / 1e6) -> 保留2位
+    const valueTimes100 = (raw * 100n + SCALE/2n) / SCALE;
+    const whole = valueTimes100 / 100n;
+    const cent  = valueTimes100 % 100n;
+
+    return `${whole.toString()}.${cent.toString().padStart(2,'0')}`;
+  }catch(_){
+    return '-';
+  }
 }
 
 /* Polymarket API helpers */
@@ -159,9 +219,7 @@ const api={
 async function queryOne(owner){
   let safes=[];
   try{
-    // 新接口（Polygon/137）：示例固定地址为
-    // https://safe-client.safe.global/v1/chains/137/owners/0xAee02FcF9A7A838b797153bd7494C023fC5d1f44/safes
-    // 这里保持按输入 owner 动态查询：
+    // 新接口（Polygon/137）
     const url=`https://safe-client.safe.global/v1/chains/137/owners/${owner}/safes`;
     const res=await fetchJ(url).catch(()=>({safes:[]}));
 
