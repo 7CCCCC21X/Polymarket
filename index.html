@@ -869,7 +869,8 @@ $('#run').addEventListener('click', async () => {
   $('#run').disabled = $('#csv').disabled = $('#json').disabled = false;
 
   const status = abortFlag ? '（已中断）' : '';
-  $('#summary').textContent = `共查询 ${list.length} 个输入地址，生成 ${idx - 1} 行数据，失败 ${fail} ${status}`;
+  const failTxt = fail ? `，其中 ${fail} 个地址暂无数据` : '';
+  $('#summary').textContent = `共查询 ${list.length} 个输入地址，生成 ${idx - 1} 行数据${failTxt}${status}`;
   $('#summary').style.display = 'block';
 
   updateSummaryStats();
