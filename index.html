@@ -77,6 +77,8 @@ th,td{padding:14px 10px;border:1px solid var(--c-border);font-size:14px;text-ali
 th{background:var(--c-primary);color:#fff;position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;white-space:nowrap}
 th:hover{opacity:.9}
 th .sort-arrow{font-size:10px;margin-left:3px;opacity:.6}
+th .sort-hint{font-size:10px;margin-left:2px;opacity:.35;transition:opacity .2s}
+th:hover .sort-hint{opacity:.7}
 tbody tr:nth-child(even){background:var(--c-even)}
 tbody tr:hover{background:var(--c-hover)}
 
@@ -113,6 +115,11 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 .footer{text-align:center;font-size:14px;color:var(--c-sub);margin-top:40px}
 .footer a{color:var(--c-primary);text-decoration:none}
 
+/* 作者标签 */
+.author-badge{display:inline-flex;align-items:center;gap:5px;background:var(--c-card);border:1px solid var(--c-border);border-radius:20px;padding:4px 14px 4px 10px;font-size:13px;color:var(--c-text);text-decoration:none;margin-left:10px;vertical-align:middle;transition:background .2s,box-shadow .2s,border-color .3s}
+.author-badge:hover{background:var(--c-hover);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.author-badge svg{width:16px;height:16px;fill:currentColor}
+
 /* 移动端适配 */
 @media(max-width:640px){
   body{padding:10px}
@@ -137,7 +144,7 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 <!-- 暗色模式切换 -->
 <button id="themeBtn" class="theme-toggle" title="切换暗色/亮色模式">🌙</button>
 
-<h1>Polymarket 数据批量查询</h1>
+<h1>Polymarket 数据批量查询 <a class="author-badge" href="https://x.com/0xXIAOc" target="_blank" title="关注作者推特"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@0xXIAOc</a></h1>
 <h2>批量查询地址数据</h2>
 <p class="desc">粘贴地址（每行一个），或拖入 CSV / TXT 文件。支持并发查询，实时更新结果。</p>
 
@@ -197,17 +204,17 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
     <table id="tbl">
       <thead>
         <tr>
-          <th data-col="0" data-key="idx">#</th>
-          <th data-col="1" data-key="addr">地址</th>
-          <th data-col="2" data-key="vol">交易额</th>
-          <th data-col="3" data-key="cnt">池子数</th>
-          <th data-col="4" data-key="pro">盈亏</th>
-          <th data-col="5" data-key="avail">可用</th>
-          <th data-col="6" data-key="hold">持仓</th>
-          <th data-col="7" data-key="total">总余额</th>
-          <th data-col="8" data-key="days">日活</th>
-          <th data-col="9" data-key="months">月活</th>
-          <th data-col="10" data-key="last">最后活跃</th>
+          <th data-col="0" data-key="idx"># <span class="sort-hint">⇅</span></th>
+          <th data-col="1" data-key="addr">地址 <span class="sort-hint">⇅</span></th>
+          <th data-col="2" data-key="vol" title="点击排序">交易额 <span class="sort-hint">⇅</span></th>
+          <th data-col="3" data-key="cnt" title="点击排序">池子数 <span class="sort-hint">⇅</span></th>
+          <th data-col="4" data-key="pro" title="点击排序">盈亏 <span class="sort-hint">⇅</span></th>
+          <th data-col="5" data-key="avail" title="点击排序">可用 <span class="sort-hint">⇅</span></th>
+          <th data-col="6" data-key="hold" title="点击排序">持仓 <span class="sort-hint">⇅</span></th>
+          <th data-col="7" data-key="total" title="点击排序">总余额 <span class="sort-hint">⇅</span></th>
+          <th data-col="8" data-key="days" title="点击排序">日活 <span class="sort-hint">⇅</span></th>
+          <th data-col="9" data-key="months" title="点击排序">月活 <span class="sort-hint">⇅</span></th>
+          <th data-col="10" data-key="last" title="点击排序">最后活跃 <span class="sort-hint">⇅</span></th>
           <th data-col="11" data-key="refresh">操作</th>
         </tr>
       </thead>
@@ -641,10 +648,13 @@ $$('#tbl thead th').forEach(th => {
     if (sortKey === key) sortAsc = !sortAsc;
     else { sortKey = key; sortAsc = true; }
     sortAndRender();
-    // 更新箭头
+    // 更新箭头，隐藏当前列的 hint
     $$('#tbl thead th .sort-arrow').forEach(s => s.textContent = '');
+    $$('#tbl thead th .sort-hint').forEach(s => s.style.display = '');
     const arrow = th.querySelector('.sort-arrow');
     if (arrow) arrow.textContent = sortAsc ? '▲' : '▼';
+    const hint = th.querySelector('.sort-hint');
+    if (hint) hint.style.display = 'none';
   });
   // 添加排序箭头占位
   const span = document.createElement('span');
