@@ -272,15 +272,13 @@ function isValidAddr(addr) {
   return ETH_ADDR_RE.test(addr);
 }
 
-/* ========== 限流器 ========== */
-let lastRequestTime = 0;
-async function rateLimitWait() {
-  const now = Date.now();
-  const diff = now - lastRequestTime;
-  if (diff < RATE_LIMIT_MS) {
-    await new Promise(r => setTimeout(r, RATE_LIMIT_MS - diff));
-  }
-  lastRequestTime = Date.now();
+/* ========== 限流器（串行队列，防并发穿透） ========== */
+let rateLimitQueue = Promise.resolve();
+function rateLimitWait() {
+  rateLimitQueue = rateLimitQueue.then(() =>
+    new Promise(r => setTimeout(r, RATE_LIMIT_MS))
+  );
+  return rateLimitQueue;
 }
 
 /* ========== 结果缓存 ========== */
@@ -288,12 +286,17 @@ const queryCache = new Map();
 
 /* ========== 中断控制 ========== */
 let abortFlag = false;
+let runController = null;
 
 /* ========== 网络请求 ========== */
 function fetchT(url, opts = {}, timeout = FETCH_TIMEOUT) {
   const c = new AbortController();
   const tid = setTimeout(() => c.abort(), timeout);
-  return fetch(url, { ...opts, signal: c.signal }).finally(() => clearTimeout(tid));
+  // 合并外部中断信号和超时信号
+  const signal = runController
+    ? AbortSignal.any([c.signal, runController.signal])
+    : c.signal;
+  return fetch(url, { ...opts, signal }).finally(() => clearTimeout(tid));
 }
 
 async function fetchJ(url, opts = {}, tries = 2) {
@@ -649,12 +652,11 @@ $$('#tbl thead th').forEach(th => {
   th.appendChild(span);
 });
 
-function sortAndRender() {
-  if (!sortKey || !resultMeta.length) return;
+function getSortedMeta() {
+  if (!sortKey) return [...resultMeta];
   const extractor = sortExtract[sortKey];
-  if (!extractor) return;
-
-  const sorted = [...resultMeta].sort((a, b) => {
+  if (!extractor) return [...resultMeta];
+  return [...resultMeta].sort((a, b) => {
     if (a.err && !b.err) return 1;
     if (!a.err && b.err) return -1;
     const va = extractor(a), vb = extractor(b);
@@ -663,11 +665,15 @@ function sortAndRender() {
     const nb = isNaN(vb) ? -Infinity : vb;
     return sortAsc ? na - nb : nb - na;
   });
+}
 
+function renderAll() {
+  if (!resultMeta.length) return;
+  const data = getSortedMeta();
   const tbody = $('#tbl tbody');
   tbody.innerHTML = '';
   resultRows = [];
-  sorted.forEach((m, i) => {
+  data.forEach((m, i) => {
     m.idx = i + 1;
     if (m.err) {
       appendErrDirect(m.err, m.addr, i + 1);
@@ -680,6 +686,10 @@ function sortAndRender() {
   // 重新应用过滤
   const q = $('#filterInput').value.toLowerCase();
   if (q) $$('#tbl tbody tr').forEach(tr => { tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+}
+
+function sortAndRender() {
+  renderAll();
 }
 
 /* ========== 渲染辅助函数 ========== */
@@ -733,7 +743,7 @@ async function refreshRow(meta) {
     const match = rows.find(r => r.safe === meta.safe);
     if (match && !match.err) {
       Object.assign(meta, { vol: match.vol, cnt: match.cnt, pro: match.pro, avail: match.avail, hold: match.hold, act: match.act });
-      sortAndRender();
+      renderAll();
       toast('刷新完成');
     } else {
       toast('刷新失败');
@@ -813,6 +823,7 @@ $('#run').addEventListener('click', async () => {
   resultRows = [];
   resultMeta = [];
   abortFlag = false;
+  runController = new AbortController();
 
   $('#summary').style.display = 'none';
   $('#statsCards').style.display = 'none';
@@ -823,6 +834,8 @@ $('#run').addEventListener('click', async () => {
   $('#barTxt').textContent = '';
   $('#run').disabled = $('#csv').disabled = $('#json').disabled = true;
   $('#stop').style.display = '';
+  $('#stop').disabled = false;
+  $('#stop').textContent = '停止';
   $('#tfoot').style.display = 'none';
 
   let completed = 0, fail = 0, idx = 1;
@@ -865,9 +878,10 @@ $('#run').addEventListener('click', async () => {
 /* ========== 中断查询 ========== */
 $('#stop').addEventListener('click', () => {
   abortFlag = true;
+  if (runController) runController.abort();
   $('#stop').disabled = true;
   $('#stop').textContent = '正在停止...';
-  toast('查询将在当前批次完成后停止');
+  toast('正在取消所有进行中的请求...');
 });
 
 /* ========== 导出 CSV ========== */
