@@ -58,6 +58,10 @@ button:disabled{background:#94a3b8;cursor:not-allowed;opacity:.6}
 .theme-toggle{position:fixed;top:20px;right:20px;width:42px;height:42px;border-radius:50%;font-size:18px;padding:0;margin:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--c-card);color:var(--c-text);border:1px solid var(--c-border);box-shadow:var(--shadow)}
 .theme-toggle:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
 
+/* 语言切换 */
+.lang-toggle{position:fixed;top:20px;right:72px;height:42px;border-radius:21px;font-size:13px;padding:0 14px;margin:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--c-card);color:var(--c-text);border:1px solid var(--c-border);box-shadow:var(--shadow);font-weight:600;letter-spacing:.3px}
+.lang-toggle:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px)}
+
 /* 离线横幅 */
 .offline-banner{display:none;position:fixed;top:0;left:0;right:0;background:var(--c-red);color:#fff;text-align:center;padding:10px;font-size:14px;z-index:200;font-weight:500}
 
@@ -162,6 +166,7 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
   button{padding:9px 14px;font-size:13px}
   th,td{padding:8px 6px;font-size:11px}
   .theme-toggle{top:10px;right:10px;width:36px;height:36px;font-size:16px}
+  .lang-toggle{top:10px;right:56px;height:36px;font-size:12px;padding:0 10px}
   .filter-row{flex-direction:column}
   .filter-row input{width:100%}
   .toolbar{gap:4px}
@@ -171,32 +176,35 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 </head>
 
 <body>
-<div id="offlineBanner" class="offline-banner">网络已断开，请检查连接后重试</div>
+<div id="offlineBanner" class="offline-banner"></div>
 
-<button id="themeBtn" class="theme-toggle" title="切换暗色/亮色模式">🌙</button>
+<!-- 语言切换 -->
+<button id="langBtn" class="lang-toggle">EN</button>
+
+<button id="themeBtn" class="theme-toggle" title="">🌙</button>
 
 <div class="page-header">
-  <h1><span>Polymarket</span> 数据批量查询 <a class="author-badge" href="https://x.com/0xXIAOc" target="_blank" title="关注作者推特"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@0xXIAOc</a></h1>
-  <p class="subtitle">粘贴地址（每行一个），或拖入 CSV / TXT 文件，支持并发查询与实时更新</p>
+  <h1><span>Polymarket</span> <span id="pageTitle"></span> <a class="author-badge" href="https://x.com/0xXIAOc" target="_blank"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@0xXIAOc</a></h1>
+  <p class="subtitle" id="subtitleEl"></p>
 </div>
 
 <div class="card">
-  <textarea id="input" placeholder="每行粘贴一个地址，或将 CSV/TXT 文件拖拽到此处..."></textarea>
-  <div class="center"><p class="note">提示：查询前请将 VPN 切换到「全局模式」</p></div>
+  <textarea id="input"></textarea>
+  <div class="center"><p class="note" id="vpnTip"></p></div>
 
   <div class="history-wrap" id="historyWrap" style="display:none">
     <details>
-      <summary>查询历史</summary>
+      <summary id="historySummary"></summary>
       <div class="history-list" id="historyList"></div>
-      <div class="center" style="margin-top:6px"><button class="btn-sm btn-outline" id="clearHistory">清空历史</button></div>
+      <div class="center" style="margin-top:6px"><button class="btn-sm btn-outline" id="clearHistory"></button></div>
     </details>
   </div>
 
   <div class="toolbar">
-    <button id="run">开始查询</button>
-    <button id="stop" class="btn-stop" style="display:none">停止</button>
-    <button id="csv" class="btn-outline" disabled>导出 CSV</button>
-    <button id="json" class="btn-outline" disabled>导出 JSON</button>
+    <button id="run"></button>
+    <button id="stop" class="btn-stop" style="display:none"></button>
+    <button id="csv" class="btn-outline" disabled></button>
+    <button id="json" class="btn-outline" disabled></button>
   </div>
 
   <div id="loading" style="display:none;"><progress id="bar" value="0" max="100"></progress><div id="barTxt"></div></div>
@@ -204,27 +212,27 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 
   <div class="stats-cards" id="statsCards">
     <div class="stat-card">
-      <div class="stat-label">总盈亏</div>
+      <div class="stat-label" id="labelProfit"></div>
       <div class="stat-value" id="statProfit">-</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">可用资金总额</div>
+      <div class="stat-label" id="labelAvail"></div>
       <div class="stat-value" id="statAvail">-</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">持仓总额</div>
+      <div class="stat-label" id="labelHold"></div>
       <div class="stat-value" id="statHold">-</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">所有地址总余额</div>
+      <div class="stat-label" id="labelTotal"></div>
       <div class="stat-value" id="statTotal">-</div>
     </div>
   </div>
 
   <div class="filter-row" id="filterRow" style="display:none">
-    <input id="filterInput" type="text" placeholder="搜索地址或数据..." />
+    <input id="filterInput" type="text" />
     <div class="col-toggle">
-      <button class="btn-sm btn-outline" id="colToggleBtn">列显隐</button>
+      <button class="btn-sm btn-outline" id="colToggleBtn"></button>
       <div class="col-menu" id="colMenu"></div>
     </div>
   </div>
@@ -233,19 +241,19 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
     <table id="tbl">
       <thead>
         <tr>
-          <th data-col="0" data-key="idx" title="点击恢复输入顺序"># <span class="sort-hint">↺</span></th>
-          <th data-col="1" data-key="addr">地址 <span class="sort-hint">⇅</span></th>
-          <th data-col="2" data-key="vol" title="点击排序">交易额 <span class="sort-hint">⇅</span></th>
-          <th data-col="3" data-key="cnt" title="点击排序">池子数 <span class="sort-hint">⇅</span></th>
-          <th data-col="4" data-key="pro" title="点击排序">盈亏 <span class="sort-hint">⇅</span></th>
-          <th data-col="5" data-key="avail" title="点击排序">可用 <span class="sort-hint">⇅</span></th>
-          <th data-col="6" data-key="hold" title="点击排序">持仓 <span class="sort-hint">⇅</span></th>
-          <th data-col="7" data-key="total" title="点击排序">总余额 <span class="sort-hint">⇅</span></th>
-          <th data-col="8" data-key="days" title="点击排序">日活 <span class="sort-hint">⇅</span></th>
-          <th data-col="9" data-key="months" title="点击排序">月活 <span class="sort-hint">⇅</span></th>
-          <th data-col="10" data-key="last" title="点击排序">最后活跃 <span class="sort-hint">⇅</span></th>
-          <th data-col="11" data-key="note">备注</th>
-          <th data-col="12" data-key="refresh">操作</th>
+          <th data-col="0" data-key="idx"># <span class="sort-hint">↺</span></th>
+          <th data-col="1" data-key="addr"><span class="sort-hint">⇅</span></th>
+          <th data-col="2" data-key="vol"><span class="sort-hint">⇅</span></th>
+          <th data-col="3" data-key="cnt"><span class="sort-hint">⇅</span></th>
+          <th data-col="4" data-key="pro"><span class="sort-hint">⇅</span></th>
+          <th data-col="5" data-key="avail"><span class="sort-hint">⇅</span></th>
+          <th data-col="6" data-key="hold"><span class="sort-hint">⇅</span></th>
+          <th data-col="7" data-key="total"><span class="sort-hint">⇅</span></th>
+          <th data-col="8" data-key="days"><span class="sort-hint">⇅</span></th>
+          <th data-col="9" data-key="months"><span class="sort-hint">⇅</span></th>
+          <th data-col="10" data-key="last"><span class="sort-hint">⇅</span></th>
+          <th data-col="11" data-key="note"></th>
+          <th data-col="12" data-key="refresh"></th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -260,6 +268,80 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 <div id="toast" class="toast"></div>
 
 <script>
+/* ========== 国际化 ========== */
+const i18n = {
+  zh: {
+    title:'数据批量查询', subtitle:'粘贴地址（每行一个），或拖入 CSV / TXT 文件，支持并发查询与实时更新',
+    placeholder:'每行粘贴一个地址，或将 CSV/TXT 文件拖拽到此处...',
+    vpnTip:'提示：查询前请将 VPN 切换到「全局模式」',
+    historyTitle:'查询历史', clearHistory:'清空历史',
+    startQuery:'开始查询', stop:'停止', stopping:'正在停止...',
+    exportCsv:'导出 CSV', exportJson:'导出 JSON',
+    colToggle:'列显隐', searchPlaceholder:'搜索地址或数据...',
+    addNote:'添加备注', refresh:'刷新', themeTitle:'切换暗色/亮色模式',
+    thCols:['#','地址','交易额','池子数','盈亏','可用','持仓','总余额','日活','月活','最后活跃','备注','操作'],
+    statLabels:['总盈亏','可用资金总额','持仓总额','所有地址总余额'],
+    copied:'已复制', noInput:'请输入地址',
+    invalidAddr:n=>`${n} 个地址格式无效，请检查`,
+    dedupMsg:n=>`已自动去除 ${n} 个重复地址`,
+    importOk:n=>`已导入 ${n} 个地址`,
+    importNoAddr:'文件中未找到有效地址', importFileType:'仅支持 CSV 或 TXT 文件',
+    historyLoaded:'已加载历史记录', historyCleared:'历史已清空',
+    refreshing:'正在刷新...', refreshOk:'刷新完成', refreshFail:'刷新失败',
+    noData:'暂无数据', cancelRequests:'正在取消所有进行中的请求...',
+    orderRestored:'已恢复输入顺序',
+    sortClickTip:'点击排序', resetOrderTip:'点击恢复输入顺序',
+    today:'今天', daysAgo:n=>`${n}天前`,
+    noDataErr:'无数据', subQueryFail:'子查询失败',
+    summaryText:(total,rows,fail,stopped)=>{
+      let s=`共查询 ${total} 个输入地址，生成 ${rows} 行数据`;
+      if(fail) s+=`，其中 ${fail} 个地址暂无数据`;
+      if(stopped) s+='（已中断）'; return s;
+    },
+    footSummary:'汇总', footRows:n=>`${n} 行`,
+    historyEntry:n=>`${n} 个地址`, historyDel:'删',
+    csvHeaders:['#','地址','交易额','池子数','盈亏','可用','持仓','总余额','日活','月活','最后活跃','备注'],
+    offlineMsg:'网络已断开，请检查连接后重试',
+  },
+  en: {
+    title:'Batch Query', subtitle:'Paste addresses (one per line), or drag in CSV / TXT files. Supports concurrent queries & real-time updates.',
+    placeholder:'Paste one address per line, or drag & drop CSV/TXT files here...',
+    vpnTip:'Tip: Switch your VPN to "Global Mode" before querying',
+    historyTitle:'Query History', clearHistory:'Clear History',
+    startQuery:'Start Query', stop:'Stop', stopping:'Stopping...',
+    exportCsv:'Export CSV', exportJson:'Export JSON',
+    colToggle:'Columns', searchPlaceholder:'Search addresses or data...',
+    addNote:'Add note', refresh:'Refresh', themeTitle:'Toggle dark/light mode',
+    thCols:['#','Address','Volume','Pools','P&L','Available','Holdings','Balance','Days','Months','Last Active','Notes','Actions'],
+    statLabels:['Total P&L','Total Available','Total Holdings','Total Balance'],
+    copied:'Copied', noInput:'Please enter addresses',
+    invalidAddr:n=>`${n} invalid address(es), please check`,
+    dedupMsg:n=>`Removed ${n} duplicate address(es)`,
+    importOk:n=>`Imported ${n} address(es)`,
+    importNoAddr:'No valid addresses found in file', importFileType:'Only CSV or TXT files supported',
+    historyLoaded:'History loaded', historyCleared:'History cleared',
+    refreshing:'Refreshing...', refreshOk:'Refresh complete', refreshFail:'Refresh failed',
+    noData:'No data', cancelRequests:'Cancelling all pending requests...',
+    orderRestored:'Input order restored',
+    sortClickTip:'Click to sort', resetOrderTip:'Click to restore input order',
+    today:'Today', daysAgo:n=>`${n}d ago`,
+    noDataErr:'No data', subQueryFail:'Sub-query failed',
+    summaryText:(total,rows,fail,stopped)=>{
+      let s=`Queried ${total} input address(es), generated ${rows} row(s)`;
+      if(fail) s+=`, ${fail} address(es) have no data`;
+      if(stopped) s+=' (interrupted)'; return s;
+    },
+    footSummary:'Total', footRows:n=>`${n} rows`,
+    historyEntry:n=>`${n} address(es)`, historyDel:'Del',
+    csvHeaders:['#','Address','Volume','Pools','P&L','Available','Holdings','Balance','Days','Months','Last Active','Notes'],
+    offlineMsg:'Network disconnected. Please check your connection and retry.',
+  }
+};
+let curLang = localStorage.getItem('pm_lang') || 'zh';
+function L(k,...a){ const v=i18n[curLang][k]; return typeof v==='function'?v(...a):(v??k); }
+function fmtLast(act){ if(!act||act.lastGap===undefined) return '-'; return act.lastGap?L('daysAgo',act.lastGap):L('today'); }
+
+/* ========== 常量 ========== */
 const FETCH_TIMEOUT   = 5000;
 const RPC_TIMEOUT     = 3500;
 const RETRY_BASE_MS   = 800;
@@ -303,7 +385,7 @@ function toast(t) {
 }
 
 function copy(addr) {
-  navigator.clipboard.writeText(addr).then(() => toast('已复制'));
+  navigator.clipboard.writeText(addr).then(() => toast(L('copied')));
 }
 
 function isValidAddr(addr) {
@@ -410,7 +492,7 @@ const api = {
   activity: async a => {
     try {
       const d = await fetchJ(`https://data-api.polymarket.com/activity?user=${a}&limit=999&offset=0`);
-      if (!d.length) return { d: 0, m: 0, last: '-', thisMonth: false };
+      if (!d.length) return { d: 0, m: 0, lastGap: undefined, thisMonth: false };
       d.sort((x, y) => y.timestamp - x.timestamp);
       const days = new Set(), months = new Set();
       for (const item of d) {
@@ -424,12 +506,21 @@ const api = {
       const now = new Date();
       const thisMonth = latest.getFullYear() === now.getFullYear() && latest.getMonth() === now.getMonth();
       const gap = Math.floor((Date.now() - latest.getTime()) / MS_PER_DAY);
-      return { d: days.size, m: months.size, last: gap ? `${gap}天前` : '今天', thisMonth };
+      return { d: days.size, m: months.size, lastGap: gap, thisMonth };
     } catch (_) {
-      return { d: 0, m: 0, last: '-', thisMonth: false };
+      return { d: 0, m: 0, lastGap: undefined, thisMonth: false };
     }
   }
 };
+
+/* error codes instead of localized strings */
+const ERR_NO_DATA = 'ERR_NO_DATA';
+const ERR_SUB_QUERY = 'ERR_SUB_QUERY';
+function errMsg(code) {
+  if (code === ERR_NO_DATA) return L('noDataErr');
+  if (code === ERR_SUB_QUERY) return L('subQueryFail');
+  return code;
+}
 
 async function queryOne(owner) {
   if (queryCache.has(owner)) return queryCache.get(owner);
@@ -447,7 +538,7 @@ async function queryOne(owner) {
   } catch (_) {}
 
   if (!safes.length) {
-    const result = [{ disp: owner, err: '无数据' }];
+    const result = [{ disp: owner, err: ERR_NO_DATA }];
     queryCache.set(owner, result);
     return result;
   }
@@ -462,7 +553,7 @@ async function queryOne(owner) {
       ]);
       rows.push({ disp: owner, safe, vol, cnt, pro, avail, hold, act });
     } catch (_) {
-      rows.push({ disp: owner, err: '子查询失败' });
+      rows.push({ disp: owner, err: ERR_SUB_QUERY });
     }
   }
   queryCache.set(owner, rows);
@@ -484,7 +575,8 @@ async function runPool(tasks, concurrency, onDone) {
 
 let resultRows = [];
 let resultMeta = [];
-const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注'];
+/* store last query stats for summary re-rendering */
+let lastQueryStats = null;
 
 function initTheme() {
   const saved = localStorage.getItem('pm_theme');
@@ -507,6 +599,68 @@ $('#themeBtn').addEventListener('click', () => {
 });
 initTheme();
 
+/* ========== 语言切换 ========== */
+function applyLang() {
+  document.documentElement.lang = curLang === 'zh' ? 'zh' : 'en';
+  document.title = `Polymarket ${L('title')}`;
+  $('#langBtn').textContent = curLang === 'zh' ? 'EN' : '中文';
+  $('#pageTitle').textContent = L('title');
+  $('#subtitleEl').textContent = L('subtitle');
+  $('#input').placeholder = L('placeholder');
+  $('#vpnTip').textContent = L('vpnTip');
+  $('#historySummary').textContent = L('historyTitle');
+  $('#clearHistory').textContent = L('clearHistory');
+  $('#run').textContent = L('startQuery');
+  $('#csv').textContent = L('exportCsv');
+  $('#json').textContent = L('exportJson');
+  $('#colToggleBtn').textContent = L('colToggle');
+  $('#themeBtn').title = L('themeTitle');
+  $('#filterInput').placeholder = L('searchPlaceholder');
+  $('#offlineBanner').textContent = L('offlineMsg');
+
+  // table headers
+  const cols = L('thCols');
+  $$('#tbl thead th').forEach((th, i) => {
+    if (i >= cols.length) return;
+    // update text node before any child elements (sort-hint, sort-arrow)
+    const firstText = th.firstChild;
+    if (firstText && firstText.nodeType === 3) {
+      firstText.textContent = cols[i] + ' ';
+    } else {
+      th.insertBefore(document.createTextNode(cols[i] + ' '), th.firstChild);
+    }
+    // update tooltips
+    if (th.dataset.key === 'idx') th.title = L('resetOrderTip');
+    else if (th.dataset.key && th.dataset.key !== 'note' && th.dataset.key !== 'refresh') th.title = L('sortClickTip');
+  });
+
+  // stat card labels
+  const sl = L('statLabels');
+  $('#labelProfit').textContent = sl[0];
+  $('#labelAvail').textContent = sl[1];
+  $('#labelHold').textContent = sl[2];
+  $('#labelTotal').textContent = sl[3];
+
+  // rebuild column menu & history
+  buildColMenu();
+  renderHistory();
+
+  // re-render summary text if we have query stats
+  if (lastQueryStats) {
+    const s = lastQueryStats;
+    $('#summary').textContent = L('summaryText', s.total, s.rows, s.fail, s.stopped);
+  }
+
+  // re-render table data if present (fixes lastActive, error msgs, buttons)
+  if (resultMeta.length) renderAll();
+}
+
+$('#langBtn').addEventListener('click', () => {
+  curLang = curLang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('pm_lang', curLang);
+  applyLang();
+});
+
 function updateOnlineStatus() {
   $('#offlineBanner').style.display = navigator.onLine ? 'none' : 'block';
 }
@@ -528,14 +682,14 @@ inputEl.addEventListener('drop', e => {
       const addrs = text.match(/0x[0-9a-fA-F]{40}/g);
       if (addrs?.length) {
         inputEl.value = [...new Set(addrs)].join('\n');
-        toast(`已导入 ${new Set(addrs).size} 个地址`);
+        toast(L('importOk', new Set(addrs).size));
       } else {
-        toast('文件中未找到有效地址');
+        toast(L('importNoAddr'));
       }
     };
     reader.readAsText(file);
   } else {
-    toast('仅支持 CSV 或 TXT 文件');
+    toast(L('importFileType'));
   }
 });
 
@@ -574,13 +728,13 @@ function renderHistory() {
     const dt = new Date(h.time);
     const timeStr = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
     const span = document.createElement('span');
-    span.textContent = `${timeStr} — ${h.count} 个地址`;
+    span.textContent = `${timeStr} — ${L('historyEntry', h.count)}`;
     span.addEventListener('click', () => {
       inputEl.value = h.addrs.join('\n');
-      toast('已加载历史记录');
+      toast(L('historyLoaded'));
     });
     const del = document.createElement('button');
-    del.textContent = '删';
+    del.textContent = L('historyDel');
     del.addEventListener('click', () => {
       const arr = getHistory();
       arr.splice(i, 1);
@@ -595,17 +749,17 @@ function renderHistory() {
 $('#clearHistory').addEventListener('click', () => {
   localStorage.removeItem(HISTORY_KEY);
   renderHistory();
-  toast('历史已清空');
+  toast(L('historyCleared'));
 });
 renderHistory();
 
-const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注', '操作'];
 const hiddenCols = new Set();
 
 function buildColMenu() {
   const menu = $('#colMenu');
+  const names = L('thCols');
   menu.innerHTML = '';
-  COL_NAMES.forEach((name, i) => {
+  names.forEach((name, i) => {
     if (i <= 1) return;
     const label = document.createElement('label');
     const cb = document.createElement('input');
@@ -642,7 +796,6 @@ buildColMenu();
 function applyFilter() {
   const q = $('#filterInput').value.trim().toLowerCase();
   const rows = $$('#tbl tbody tr');
-
   rows.forEach(tr => {
     const fullAddr = (tr.dataset.fullAddr || '').toLowerCase();
     const text = tr.textContent.toLowerCase();
@@ -664,7 +817,7 @@ const sortExtract = {
   total: row => toNum(row.avail) + toNum(row.hold),
   days: row => row.act?.d ?? 0,
   months: row => row.act?.m ?? 0,
-  last: row => row.act?.last === '今天' ? 0 : (parseInt(row.act?.last) || 9999),
+  last: row => row.act?.lastGap ?? 9999,
   note: row => getNote(row.addr),
 };
 
@@ -677,12 +830,11 @@ $$('#tbl thead th').forEach(th => {
   const key = th.dataset.key;
   if (!key || key === 'refresh' || key === 'note') return;
   if (key === 'idx') {
-    th.title = '点击恢复输入顺序';
     th.addEventListener('click', () => {
       sortKey = null; sortAsc = true;
       renderAll();
       resetSortUI();
-      toast('已恢复输入顺序');
+      toast(L('orderRestored'));
     });
     return;
   }
@@ -762,9 +914,9 @@ function renderRowDirect(m, idx) {
     <td>${fmtDec(total)}</td>
     <td>${m.act?.d ?? '-'}</td>
     <td>${m.act?.m ?? '-'}</td>
-    <td class="${lastCls}">${m.act?.last ?? '-'}</td>
-    <td><input class="note-input" data-note placeholder="添加备注" value="${(getNote(m.addr) || '').replace(/"/g, '&quot;')}"></td>
-    <td><button class="btn-sm" data-refresh>刷新</button></td>`;
+    <td class="${lastCls}">${fmtLast(m.act)}</td>
+    <td><input class="note-input" data-note placeholder="${L('addNote')}" value="${(getNote(m.addr) || '').replace(/"/g, '&quot;')}"></td>
+    <td><button class="btn-sm" data-refresh>${L('refresh')}</button></td>`;
 
   tr.querySelector('[data-addr]').addEventListener('click', () => copy(m.addr));
   tr.querySelector('[data-refresh]').addEventListener('click', () => refreshRow(m));
@@ -777,34 +929,34 @@ function renderRowDirect(m, idx) {
   resultRows.push([
     idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`,
     fmtDec(m.avail), fmtDec(m.hold), fmtDec(total),
-    m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-', getNote(m.addr)
+    m.act?.d ?? 0, m.act?.m ?? 0, fmtLast(m.act), getNote(m.addr)
   ]);
 }
 
-function appendErrDirect(msg, addr, idx) {
+function appendErrDirect(code, addr, idx) {
   const tbody = $('#tbl tbody');
   const tr = document.createElement('tr');
   tr.dataset.fullAddr = addr.toLowerCase();
-  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="11" class="negative">${msg}</td>`;
+  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="11" class="negative">${errMsg(code)}</td>`;
   tbody.appendChild(tr);
-  resultRows.push([idx, addr, msg]);
+  resultRows.push([idx, addr, errMsg(code)]);
 }
 
 async function refreshRow(meta) {
   queryCache.delete(meta.addr);
-  toast('正在刷新...');
+  toast(L('refreshing'));
   try {
     const rows = await queryOne(meta.addr);
     const match = rows.find(r => r.safe === meta.safe);
     if (match && !match.err) {
       Object.assign(meta, { vol: match.vol, cnt: match.cnt, pro: match.pro, avail: match.avail, hold: match.hold, act: match.act });
       renderAll();
-      toast('刷新完成');
+      toast(L('refreshOk'));
     } else {
-      toast('刷新失败');
+      toast(L('refreshFail'));
     }
   } catch {
-    toast('刷新失败');
+    toast(L('refreshFail'));
   }
 }
 
@@ -841,7 +993,7 @@ function updateSummaryStats() {
   cards.style.display = 'grid';
 
   tfootRow.innerHTML = `
-    <td>汇总</td><td>${valid.length} 行</td>
+    <td>${L('footSummary')}</td><td>${L('footRows', valid.length)}</td>
     <td>${fmtInt(sumVol)}</td><td>-</td>
     <td class="${proCls}">${proSign} ${fmtInt(Math.abs(sumPro))}</td>
     <td>${fmtDec(sumAvail)}</td><td>${fmtDec(sumHold)}</td><td>${fmtDec(sumTotal)}</td>
@@ -853,14 +1005,14 @@ function updateSummaryStats() {
 
 $('#run').addEventListener('click', async () => {
   const raw = $('#input').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
-  if (!raw.length) return toast('请输入地址');
+  if (!raw.length) return toast(L('noInput'));
 
   const invalid = raw.filter(a => !isValidAddr(a));
-  if (invalid.length) return toast(`${invalid.length} 个地址格式无效，请检查`);
+  if (invalid.length) return toast(L('invalidAddr', invalid.length));
 
   const unique = [...new Set(raw)];
   if (unique.length < raw.length) {
-    toast(`已自动去除 ${raw.length - unique.length} 个重复地址`);
+    toast(L('dedupMsg', raw.length - unique.length));
   }
   const list = unique;
 
@@ -870,6 +1022,7 @@ $('#run').addEventListener('click', async () => {
   tbody.innerHTML = '';
   resultRows = [];
   resultMeta = [];
+  lastQueryStats = null;
   abortFlag = false;
   runController = new AbortController();
 
@@ -883,7 +1036,7 @@ $('#run').addEventListener('click', async () => {
   $('#run').disabled = $('#csv').disabled = $('#json').disabled = true;
   $('#stop').style.display = '';
   $('#stop').disabled = false;
-  $('#stop').textContent = '停止';
+  $('#stop').textContent = L('stop');
   $('#tfoot').style.display = 'none';
 
   let completed = 0, fail = 0, idx = 1;
@@ -915,9 +1068,8 @@ $('#run').addEventListener('click', async () => {
   $('#stop').style.display = 'none';
   $('#run').disabled = $('#csv').disabled = $('#json').disabled = false;
 
-  const status = abortFlag ? '（已中断）' : '';
-  const failTxt = fail ? `，其中 ${fail} 个地址暂无数据` : '';
-  $('#summary').textContent = `共查询 ${list.length} 个输入地址，生成 ${idx - 1} 行数据${failTxt}${status}`;
+  lastQueryStats = { total: list.length, rows: idx - 1, fail, stopped: abortFlag };
+  $('#summary').textContent = L('summaryText', list.length, idx - 1, fail, abortFlag);
   $('#summary').style.display = 'block';
 
   updateSummaryStats();
@@ -927,17 +1079,17 @@ $('#stop').addEventListener('click', () => {
   abortFlag = true;
   if (runController) runController.abort();
   $('#stop').disabled = true;
-  $('#stop').textContent = '正在停止...';
-  toast('正在取消所有进行中的请求...');
+  $('#stop').textContent = L('stopping');
+  toast(L('cancelRequests'));
 });
 
 $('#csv').addEventListener('click', () => {
-  if (!resultRows.length) return toast('暂无数据');
+  if (!resultRows.length) return toast(L('noData'));
   const escapeCsv = v => {
     const s = String(v);
     return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const lines = [CSV_HEADERS.map(escapeCsv).join(',')];
+  const lines = [L('csvHeaders').map(escapeCsv).join(',')];
   for (const row of resultRows) lines.push(row.map(escapeCsv).join(','));
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
@@ -949,7 +1101,7 @@ $('#csv').addEventListener('click', () => {
 });
 
 $('#json').addEventListener('click', () => {
-  if (!resultMeta.length) return toast('暂无数据');
+  if (!resultMeta.length) return toast(L('noData'));
   const data = resultMeta.filter(m => !m.err).map(m => ({
     address: m.addr,
     safe: m.safe,
@@ -961,7 +1113,7 @@ $('#json').addEventListener('click', () => {
     total: toNum(m.avail) + toNum(m.hold),
     activeDays: m.act?.d ?? 0,
     activeMonths: m.act?.m ?? 0,
-    lastActive: m.act?.last ?? '-',
+    lastActive: fmtLast(m.act),
     activeThisMonth: m.act?.thisMonth ?? false,
     note: getNote(m.addr),
   }));
@@ -973,6 +1125,9 @@ $('#json').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+/* ========== 初始化语言 ========== */
+applyLang();
 </script>
 </body>
 </html>
