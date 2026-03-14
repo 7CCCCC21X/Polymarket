@@ -6,43 +6,88 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0" />
 <style>
 :root{--c-primary:#0078d7;--c-primary-dark:#005fa3;--c-bg:#fafafa;--c-card:#fff;--c-border:#e5e7eb;
-      --c-text:#222;--c-sub:#555;--c-green:#16a34a;--c-red:#e11d48;}
+      --c-text:#222;--c-sub:#555;--c-green:#16a34a;--c-red:#e11d48;--c-hover:#e8f6ff;--c-even:#f7fafd;
+      --c-input-bg:#fff;--c-summary-bg:#e8f1ff;--c-tooltip:#333;}
+
+/* 暗色模式 */
+[data-theme="dark"]{--c-primary:#4da6ff;--c-primary-dark:#2b8cd6;--c-bg:#1a1a2e;--c-card:#16213e;--c-border:#2a2a4a;
+      --c-text:#e0e0e0;--c-sub:#aaa;--c-green:#4ade80;--c-red:#fb7185;--c-hover:#1e2d50;--c-even:#1b2540;
+      --c-input-bg:#0f1a30;--c-summary-bg:#1e2d50;--c-tooltip:#555;}
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,Segoe UI,PingFang SC,Helvetica,Arial,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.6;padding:24px}
+body{font-family:-apple-system,Segoe UI,PingFang SC,Helvetica,Arial,sans-serif;background:var(--c-bg);color:var(--c-text);line-height:1.6;padding:24px;transition:background .3s,color .3s}
 h1{text-align:center;font-size:28px;margin-bottom:24px;color:var(--c-primary)}
 h2{text-align:center;font-size:22px;margin:40px 0 12px;color:var(--c-primary);position:relative}
 h2::after{content:'';display:block;width:80px;height:2px;background:var(--c-primary);margin:8px auto 0;border-radius:1px}
 .desc{max-width:780px;margin:0 auto 20px;text-align:center;font-size:14px;color:var(--c-sub)}
 .note{text-align:center;font-size:14px;font-weight:600;color:var(--c-red);margin:4px 0 12px}
 
-.card{max-width:1000px;margin:0 auto 24px;background:var(--c-card);border:1px solid var(--c-border);border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:24px}
-textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border:1px solid var(--c-border);border-radius:6px}
+.card{max-width:1100px;margin:0 auto 24px;background:var(--c-card);border:1px solid var(--c-border);border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);padding:24px;transition:background .3s,border-color .3s}
+textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border:1px solid var(--c-border);border-radius:6px;background:var(--c-input-bg);color:var(--c-text);font-family:inherit;font-size:14px;transition:background .3s,border-color .3s,color .3s}
+textarea.drag-over{border-color:var(--c-primary);background:var(--c-summary-bg)}
 
-button{padding:10px 18px;font-size:15px;border:none;border-radius:6px;background:var(--c-primary);color:#fff;margin:8px;cursor:pointer;transition:.2s}
+button{padding:10px 18px;font-size:15px;border:none;border-radius:6px;background:var(--c-primary);color:#fff;margin:4px;cursor:pointer;transition:.2s}
 button:hover:not(:disabled){background:var(--c-primary-dark);transform:translateY(-2px)}
-button:disabled{background:#9ca3af}
+button:disabled{background:#9ca3af;cursor:not-allowed}
+.btn-stop{background:var(--c-red)}
+.btn-stop:hover:not(:disabled){background:#be123c}
+.btn-sm{padding:4px 8px;font-size:12px;margin:0}
 .center{text-align:center}
+.toolbar{display:flex;justify-content:center;flex-wrap:wrap;gap:4px;margin-top:6px}
+
+/* 主题切换 */
+.theme-toggle{position:fixed;top:16px;right:16px;width:44px;height:44px;border-radius:50%;font-size:20px;padding:0;margin:0;z-index:100;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+
+/* 离线横幅 */
+.offline-banner{display:none;position:fixed;top:0;left:0;right:0;background:var(--c-red);color:#fff;text-align:center;padding:8px;font-size:14px;z-index:200}
 
 #loading{margin-top:12px;text-align:center;color:var(--c-primary)}
 progress{width:100%;height:8px;border:none;border-radius:4px;background:var(--c-border)}
-progress::-webkit-progress-value{background:var(--c-primary)}
+progress::-webkit-progress-value{background:var(--c-primary);border-radius:4px}
+progress::-webkit-progress-bar{background:var(--c-border);border-radius:4px}
 
-#summary{display:none;margin:18px 0 12px;padding:10px 12px;background:#e8f1ff;border-left:4px solid var(--c-primary);
-         border-radius:4px;color:var(--c-primary);font-size:14px}
+#summary{display:none;margin:18px 0 12px;padding:10px 12px;background:var(--c-summary-bg);border-left:4px solid var(--c-primary);
+         border-radius:4px;color:var(--c-primary);font-size:14px;transition:background .3s}
 
-/* 表格样式：网格+悬停高亮+居中 */
-.table-wrap{overflow-x:auto}
-table{width:100%;min-width:950px;border-collapse:collapse;background:var(--c-card);border:1px solid var(--c-border)}
-th,td{padding:14px 10px;border:1px solid var(--c-border);font-size:14px;text-align:center}
-th{background:var(--c-primary);color:#fff;position:sticky;top:0;z-index:2}
-tbody tr:nth-child(even){background:#f7fafd}
-tbody tr:hover{background:#e8f6ff}
+/* 搜索过滤 */
+.filter-row{display:flex;gap:8px;align-items:center;margin:12px 0;flex-wrap:wrap}
+.filter-row input{flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--c-border);border-radius:6px;font-size:14px;background:var(--c-input-bg);color:var(--c-text);transition:background .3s,border-color .3s}
+
+/* 列选择下拉 */
+.col-toggle{position:relative;display:inline-block}
+.col-menu{display:none;position:absolute;top:100%;right:0;background:var(--c-card);border:1px solid var(--c-border);border-radius:6px;padding:8px;min-width:160px;z-index:10;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.col-menu.show{display:block}
+.col-menu label{display:block;padding:4px 0;font-size:13px;cursor:pointer;white-space:nowrap}
+.col-menu label:hover{color:var(--c-primary)}
+
+/* 查询历史 */
+.history-wrap{margin-top:8px}
+.history-wrap details{font-size:13px;color:var(--c-sub)}
+.history-wrap summary{cursor:pointer;color:var(--c-primary);user-select:none}
+.history-list{max-height:150px;overflow-y:auto;margin-top:6px}
+.history-item{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--c-border)}
+.history-item span{cursor:pointer;color:var(--c-text);font-size:12px}
+.history-item span:hover{color:var(--c-primary)}
+.history-item button{background:var(--c-red);color:#fff;border:none;border-radius:3px;padding:2px 6px;font-size:11px;cursor:pointer}
+
+/* 表格样式 */
+.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;min-width:950px;border-collapse:collapse;background:var(--c-card);border:1px solid var(--c-border);transition:background .3s}
+th,td{padding:14px 10px;border:1px solid var(--c-border);font-size:14px;text-align:center;transition:background .3s,border-color .3s}
+th{background:var(--c-primary);color:#fff;position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;white-space:nowrap}
+th:hover{opacity:.9}
+th .sort-arrow{font-size:10px;margin-left:3px;opacity:.6}
+tbody tr:nth-child(even){background:var(--c-even)}
+tbody tr:hover{background:var(--c-hover)}
 
 /* 粘住列 */
 thead th:nth-child(1){position:sticky;left:0;background:var(--c-primary);z-index:3}
 thead th:nth-child(2){position:sticky;left:46px;background:var(--c-primary);z-index:3}
-tbody td:nth-child(1){position:sticky;left:0;background:var(--c-card);z-index:1}
-tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index:1}
+tbody td:nth-child(1){position:sticky;left:0;background:inherit;z-index:1}
+tbody td:nth-child(2){position:sticky;left:46px;background:inherit;z-index:1}
+
+/* 汇总行 */
+tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var(--c-primary);color:var(--c-primary)}
 
 /* 状态色 */
 .positive{color:var(--c-green)}
@@ -52,42 +97,94 @@ tbody td:nth-child(2){position:sticky;left:46px;background:var(--c-card);z-index
 /* 复制按钮 & Toast */
 .copy{margin-left:4px;font-size:14px;color:var(--c-sub);cursor:pointer}
 .copy:hover{color:var(--c-primary)}
-.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:6px 12px;border-radius:4px;font-size:14px;opacity:0;transition:.3s}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--c-tooltip);color:#fff;padding:6px 12px;border-radius:4px;font-size:14px;opacity:0;transition:.3s;z-index:300}
 
 /* 页脚 */
 .footer{text-align:center;font-size:14px;color:var(--c-sub);margin-top:40px}
 .footer a{color:var(--c-primary);text-decoration:none}
+
+/* 移动端适配 */
+@media(max-width:640px){
+  body{padding:10px}
+  h1{font-size:22px;margin-bottom:16px}
+  h2{font-size:18px;margin:24px 0 8px}
+  .card{padding:12px}
+  textarea{min-height:80px}
+  button{padding:8px 12px;font-size:13px}
+  th,td{padding:8px 6px;font-size:12px}
+  .theme-toggle{top:8px;right:8px;width:36px;height:36px;font-size:16px}
+  .filter-row{flex-direction:column}
+  .filter-row input{width:100%}
+  .toolbar{gap:2px}
+}
 </style>
 </head>
 
 <body>
+<!-- 离线横幅 -->
+<div id="offlineBanner" class="offline-banner">网络已断开，请检查连接后重试</div>
+
+<!-- 暗色模式切换 -->
+<button id="themeBtn" class="theme-toggle" title="切换暗色/亮色模式">🌙</button>
+
 <h1>Polymarket 数据批量查询</h1>
 <h2>批量查询地址数据</h2>
-<p class="desc">粘贴地址（每行一个），系统按顺序逐个查询并实时更新结果。</p>
+<p class="desc">粘贴地址（每行一个），或拖入 CSV / TXT 文件。支持并发查询，实时更新结果。</p>
 
 <div class="card">
-  <textarea id="input"></textarea>
+  <textarea id="input" placeholder="每行粘贴一个地址，或将 CSV/TXT 文件拖拽到此处..."></textarea>
   <p class="note">提示：查询前请将 VPN 切换到「全局模式」</p>
-  <div class="center" style="margin-top:6px;">
+
+  <!-- 查询历史 -->
+  <div class="history-wrap" id="historyWrap" style="display:none">
+    <details>
+      <summary>查询历史</summary>
+      <div class="history-list" id="historyList"></div>
+      <div class="center" style="margin-top:4px"><button class="btn-sm" id="clearHistory">清空历史</button></div>
+    </details>
+  </div>
+
+  <div class="toolbar">
     <button id="run">查询</button>
+    <button id="stop" class="btn-stop" style="display:none">停止</button>
     <button id="csv" disabled>导出 CSV</button>
+    <button id="json" disabled>导出 JSON</button>
   </div>
 
   <div id="loading" style="display:none;"><progress id="bar" value="0" max="100"></progress><div id="barTxt"></div></div>
   <div id="summary"></div>
 
+  <!-- 搜索过滤 + 列控制 -->
+  <div class="filter-row" id="filterRow" style="display:none">
+    <input id="filterInput" type="text" placeholder="搜索地址或数据..." />
+    <div class="col-toggle">
+      <button class="btn-sm" id="colToggleBtn">列显隐</button>
+      <div class="col-menu" id="colMenu"></div>
+    </div>
+  </div>
+
   <div class="table-wrap">
     <table id="tbl">
       <thead>
         <tr>
-          <th>#</th><th>地址</th>
-          <th>交易额</th><th>池子数</th>
-          <th>盈亏</th><th>可用</th>
-          <th>持仓</th><th>总余额</th>
-          <th>日活</th><th>月活</th><th>最后活跃</th>
+          <th data-col="0" data-key="idx">#</th>
+          <th data-col="1" data-key="addr">地址</th>
+          <th data-col="2" data-key="vol">交易额</th>
+          <th data-col="3" data-key="cnt">池子数</th>
+          <th data-col="4" data-key="pro">盈亏</th>
+          <th data-col="5" data-key="avail">可用</th>
+          <th data-col="6" data-key="hold">持仓</th>
+          <th data-col="7" data-key="total">总余额</th>
+          <th data-col="8" data-key="days">日活</th>
+          <th data-col="9" data-key="months">月活</th>
+          <th data-col="10" data-key="last">最后活跃</th>
+          <th data-col="11" data-key="refresh">操作</th>
         </tr>
       </thead>
       <tbody></tbody>
+      <tfoot id="tfoot" style="display:none">
+        <tr id="tfootRow"></tr>
+      </tfoot>
     </table>
   </div>
 </div>
@@ -103,12 +200,17 @@ const RETRY_BASE_MS   = 800;
 const MAX_SAFES       = 5;
 const MS_PER_DAY      = 86400000;
 const USDC_DECIMALS   = 6;
-const USDC_SCALE      = 10n ** BigInt(USDC_DECIMALS);   // 1000000n
+const USDC_SCALE      = 10n ** BigInt(USDC_DECIMALS);
 const USDC_CONTRACT   = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 const ETH_ADDR_RE     = /^0x[0-9a-fA-F]{40}$/;
+const CONCURRENCY     = 3;      // 并发查询数
+const RATE_LIMIT_MS   = 200;    // API 限流间隔
+const HISTORY_KEY     = 'pm_query_history';
+const MAX_HISTORY     = 20;
 
 /* ========== 工具函数 ========== */
 const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
 
 function toNum(n) {
   const v = Number(n);
@@ -140,6 +242,23 @@ function isValidAddr(addr) {
   return ETH_ADDR_RE.test(addr);
 }
 
+/* ========== 限流器 ========== */
+let lastRequestTime = 0;
+async function rateLimitWait() {
+  const now = Date.now();
+  const diff = now - lastRequestTime;
+  if (diff < RATE_LIMIT_MS) {
+    await new Promise(r => setTimeout(r, RATE_LIMIT_MS - diff));
+  }
+  lastRequestTime = Date.now();
+}
+
+/* ========== 结果缓存 ========== */
+const queryCache = new Map();
+
+/* ========== 中断控制 ========== */
+let abortFlag = false;
+
 /* ========== 网络请求 ========== */
 function fetchT(url, opts = {}, timeout = FETCH_TIMEOUT) {
   const c = new AbortController();
@@ -148,6 +267,7 @@ function fetchT(url, opts = {}, timeout = FETCH_TIMEOUT) {
 }
 
 async function fetchJ(url, opts = {}, tries = 2) {
+  await rateLimitWait();
   for (let i = 0; i < tries; i++) {
     try {
       const r = await fetchT(url, opts);
@@ -174,7 +294,6 @@ let preferredPolygonRpc = POLYGON_RPCS[0];
 
 async function rpcEthCall(payload, timeout = RPC_TIMEOUT) {
   const urls = [preferredPolygonRpc, ...POLYGON_RPCS.filter(u => u !== preferredPolygonRpc)];
-
   for (const url of urls) {
     try {
       const res = await fetchT(url, {
@@ -183,10 +302,8 @@ async function rpcEthCall(payload, timeout = RPC_TIMEOUT) {
         body: JSON.stringify(payload),
       }, timeout);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
       const j = await res.json();
       const result = Array.isArray(j) ? j[0]?.result : j?.result;
-
       if (typeof result === 'string' && result.startsWith('0x')) {
         preferredPolygonRpc = url;
         return result;
@@ -202,11 +319,9 @@ async function getUSDC(addr) {
     jsonrpc: '2.0', id: 1, method: 'eth_call',
     params: [{ to: USDC_CONTRACT, data }, 'latest']
   };
-
   try {
     const hex = await rpcEthCall(payload, 4000);
     if (!hex) return '-';
-
     const raw = hex === '0x' ? 0n : BigInt(hex);
     const valueTimes100 = (raw * 100n + USDC_SCALE / 2n) / USDC_SCALE;
     const whole = valueTimes100 / 100n;
@@ -228,29 +343,23 @@ const api = {
   usdc: getUSDC,
   value: a => fetchJ(`https://data-api.polymarket.com/value?user=${a}`)
     .then(d => d[0]?.value ?? '-'),
-
   activity: async a => {
     try {
       const d = await fetchJ(`https://data-api.polymarket.com/activity?user=${a}&limit=999&offset=0`);
       if (!d.length) return { d: 0, m: 0, last: '-', thisMonth: false };
-
       d.sort((x, y) => y.timestamp - x.timestamp);
-
-      const days = new Set();
-      const months = new Set();
+      const days = new Set(), months = new Set();
       for (const item of d) {
         const ts = item.timestamp * 1000;
         const date = new Date(ts);
         const y = date.getFullYear(), mo = date.getMonth() + 1, day = date.getDate();
-        days.add(y * 10000 + mo * 100 + day);    // 数字键替代字符串，更快
+        days.add(y * 10000 + mo * 100 + day);
         months.add(y * 100 + mo);
       }
-
       const latest = new Date(d[0].timestamp * 1000);
       const now = new Date();
       const thisMonth = latest.getFullYear() === now.getFullYear() && latest.getMonth() === now.getMonth();
       const gap = Math.floor((Date.now() - latest.getTime()) / MS_PER_DAY);
-
       return { d: days.size, m: months.size, last: gap ? `${gap}天前` : '今天', thisMonth };
     } catch (_) {
       return { d: 0, m: 0, last: '-', thisMonth: false };
@@ -260,11 +369,13 @@ const api = {
 
 /* ========== 查询单个 Owner 下所有 Safe ========== */
 async function queryOne(owner) {
+  // 检查缓存
+  if (queryCache.has(owner)) return queryCache.get(owner);
+
   let safes = [];
   try {
     const url = `https://safe-client.safe.global/v1/chains/137/owners/${owner}/safes`;
     const res = await fetchJ(url).catch(() => ({ safes: [] }));
-
     safes = Array.isArray(res?.safes)       ? res.safes
           : Array.isArray(res)              ? res
           : Array.isArray(res?.['137'])     ? res['137']
@@ -273,125 +384,456 @@ async function queryOne(owner) {
     safes = safes.slice(0, MAX_SAFES);
   } catch (_) { /* 忽略 */ }
 
-  if (!safes.length) return [{ disp: owner, err: '无数据' }];
+  if (!safes.length) {
+    const result = [{ disp: owner, err: '无数据' }];
+    queryCache.set(owner, result);
+    return result;
+  }
 
   const rows = [];
   for (const safe of safes) {
+    if (abortFlag) break;
     try {
       const [vol, cnt, pro, hold, act, avail] = await Promise.all([
         api.volume(safe), api.traded(safe), api.profit(safe),
         api.value(safe),  api.activity(safe), api.usdc(safe)
       ]);
-      rows.push({ disp: owner, vol, cnt, pro, avail, hold, act });
+      rows.push({ disp: owner, safe, vol, cnt, pro, avail, hold, act });
     } catch (_) {
       rows.push({ disp: owner, err: '子查询失败' });
     }
   }
+  queryCache.set(owner, rows);
   return rows;
 }
 
-/* ========== 存储查询结果供 CSV 导出 ========== */
-let resultRows = [];
+/* ========== 并发池 ========== */
+async function runPool(tasks, concurrency, onDone) {
+  let i = 0;
+  async function worker() {
+    while (i < tasks.length && !abortFlag) {
+      const idx = i++;
+      const result = await tasks[idx]();
+      onDone(result, idx);
+    }
+  }
+  const workers = Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker());
+  await Promise.all(workers);
+}
+
+/* ========== 存储查询结果 ========== */
+let resultRows = [];    // 每行原始数据对象
+let resultMeta = [];    // 每行渲染元数据
 const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃'];
 
+/* ========== 暗色模式 ========== */
+function initTheme() {
+  const saved = localStorage.getItem('pm_theme');
+  if (saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme:dark)').matches)) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    $('#themeBtn').textContent = '☀️';
+  }
+}
+$('#themeBtn').addEventListener('click', () => {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    $('#themeBtn').textContent = '🌙';
+    localStorage.setItem('pm_theme', 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    $('#themeBtn').textContent = '☀️';
+    localStorage.setItem('pm_theme', 'dark');
+  }
+});
+initTheme();
+
+/* ========== 离线提示 ========== */
+function updateOnlineStatus() {
+  $('#offlineBanner').style.display = navigator.onLine ? 'none' : 'block';
+}
+window.addEventListener('online', updateOnlineStatus);
+window.addEventListener('offline', updateOnlineStatus);
+updateOnlineStatus();
+
+/* ========== 拖拽/粘贴文件 ========== */
+const inputEl = $('#input');
+inputEl.addEventListener('dragover', e => { e.preventDefault(); inputEl.classList.add('drag-over'); });
+inputEl.addEventListener('dragleave', () => inputEl.classList.remove('drag-over'));
+inputEl.addEventListener('drop', e => {
+  e.preventDefault();
+  inputEl.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && /\.(csv|txt)$/i.test(file.name)) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // 从 CSV/TXT 提取地址
+      const text = reader.result;
+      const addrs = text.match(/0x[0-9a-fA-F]{40}/g);
+      if (addrs?.length) {
+        inputEl.value = [...new Set(addrs)].join('\n');
+        toast(`已导入 ${new Set(addrs).size} 个地址`);
+      } else {
+        toast('文件中未找到有效地址');
+      }
+    };
+    reader.readAsText(file);
+  } else {
+    toast('仅支持 CSV 或 TXT 文件');
+  }
+});
+
+/* ========== 查询历史 ========== */
+function getHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+function saveHistory(addrs) {
+  const list = getHistory();
+  const entry = { addrs: addrs.slice(0, 50), time: Date.now(), count: addrs.length };
+  list.unshift(entry);
+  if (list.length > MAX_HISTORY) list.length = MAX_HISTORY;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+  renderHistory();
+}
+function renderHistory() {
+  const list = getHistory();
+  const wrap = $('#historyWrap');
+  const el = $('#historyList');
+  if (!list.length) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  el.innerHTML = '';
+  list.forEach((h, i) => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    const dt = new Date(h.time);
+    const timeStr = `${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    const span = document.createElement('span');
+    span.textContent = `${timeStr} — ${h.count} 个地址`;
+    span.addEventListener('click', () => {
+      inputEl.value = h.addrs.join('\n');
+      toast('已加载历史记录');
+    });
+    const del = document.createElement('button');
+    del.textContent = '删';
+    del.addEventListener('click', () => {
+      const arr = getHistory();
+      arr.splice(i, 1);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+      renderHistory();
+    });
+    div.appendChild(span);
+    div.appendChild(del);
+    el.appendChild(div);
+  });
+}
+$('#clearHistory').addEventListener('click', () => {
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+  toast('历史已清空');
+});
+renderHistory();
+
+/* ========== 列显隐控制 ========== */
+const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '操作'];
+const hiddenCols = new Set();
+
+function buildColMenu() {
+  const menu = $('#colMenu');
+  menu.innerHTML = '';
+  COL_NAMES.forEach((name, i) => {
+    if (i <= 1) return; // # 和地址始终显示
+    const label = document.createElement('label');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = !hiddenCols.has(i);
+    cb.addEventListener('change', () => {
+      if (cb.checked) hiddenCols.delete(i); else hiddenCols.add(i);
+      applyColVisibility();
+    });
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(' ' + name));
+    menu.appendChild(label);
+  });
+}
+
+function applyColVisibility() {
+  const allRows = $$('#tbl tr');
+  allRows.forEach(tr => {
+    const cells = tr.children;
+    for (let i = 0; i < cells.length; i++) {
+      cells[i].style.display = hiddenCols.has(i) ? 'none' : '';
+    }
+  });
+}
+
+$('#colToggleBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  $('#colMenu').classList.toggle('show');
+});
+document.addEventListener('click', () => $('#colMenu').classList.remove('show'));
+$('#colMenu').addEventListener('click', e => e.stopPropagation());
+buildColMenu();
+
+/* ========== 搜索过滤 ========== */
+$('#filterInput').addEventListener('input', () => {
+  const q = $('#filterInput').value.toLowerCase();
+  const rows = $$('#tbl tbody tr');
+  rows.forEach(tr => {
+    const text = tr.textContent.toLowerCase();
+    tr.style.display = text.includes(q) ? '' : 'none';
+  });
+});
+
+/* ========== 表格排序 ========== */
+let sortKey = null, sortAsc = true;
+const sortExtract = {
+  idx: row => row.idx,
+  addr: row => row.addr,
+  vol: row => toNum(row.vol),
+  cnt: row => toNum(row.cnt),
+  pro: row => toNum(row.pro),
+  avail: row => toNum(row.avail),
+  hold: row => toNum(row.hold),
+  total: row => toNum(row.avail) + toNum(row.hold),
+  days: row => row.act?.d ?? 0,
+  months: row => row.act?.m ?? 0,
+  last: row => row.act?.last === '今天' ? 0 : (parseInt(row.act?.last) || 9999),
+};
+
+$$('#tbl thead th').forEach(th => {
+  const key = th.dataset.key;
+  if (!key || key === 'refresh') return;
+  th.addEventListener('click', () => {
+    if (sortKey === key) sortAsc = !sortAsc;
+    else { sortKey = key; sortAsc = true; }
+    sortAndRender();
+    // 更新箭头
+    $$('#tbl thead th .sort-arrow').forEach(s => s.textContent = '');
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = sortAsc ? '▲' : '▼';
+  });
+  // 添加排序箭头占位
+  const span = document.createElement('span');
+  span.className = 'sort-arrow';
+  th.appendChild(span);
+});
+
+function sortAndRender() {
+  if (!sortKey || !resultMeta.length) return;
+  const extractor = sortExtract[sortKey];
+  if (!extractor) return;
+
+  const sorted = [...resultMeta].sort((a, b) => {
+    if (a.err && !b.err) return 1;
+    if (!a.err && b.err) return -1;
+    const va = extractor(a), vb = extractor(b);
+    if (typeof va === 'string' && typeof vb === 'string') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+    const na = isNaN(va) ? -Infinity : va;
+    const nb = isNaN(vb) ? -Infinity : vb;
+    return sortAsc ? na - nb : nb - na;
+  });
+
+  const tbody = $('#tbl tbody');
+  tbody.innerHTML = '';
+  resultRows = [];
+  sorted.forEach((m, i) => {
+    m.idx = i + 1;
+    if (m.err) {
+      appendErrDirect(m.err, m.addr, i + 1);
+    } else {
+      renderRowDirect(m, i + 1);
+    }
+  });
+  updateSummaryStats();
+  applyColVisibility();
+  // 重新应用过滤
+  const q = $('#filterInput').value.toLowerCase();
+  if (q) $$('#tbl tbody tr').forEach(tr => { tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+}
+
+/* ========== 渲染辅助函数 ========== */
+function renderRowDirect(m, idx) {
+  const tbody = $('#tbl tbody');
+  const p = toNum(m.pro);
+  const sign = p < 0 ? '▼' : '▲';
+  const cls = p < 0 ? 'negative' : 'positive';
+  const total = (toNum(m.avail) + toNum(m.hold)).toFixed(2);
+  const lastCls = m.act?.thisMonth ? '' : 'inactive';
+
+  const tr = document.createElement('tr');
+  tr.dataset.rowIdx = String(idx - 1);
+  tr.innerHTML = `
+    <td>${idx}</td>
+    <td>${clip(m.addr)}<span class="copy" data-addr>📋</span></td>
+    <td>${fmtInt(m.vol)}</td>
+    <td>${m.cnt}</td>
+    <td class="${cls}">${sign} ${fmtInt(Math.abs(p))}</td>
+    <td>${fmtDec(m.avail)}</td>
+    <td>${fmtDec(m.hold)}</td>
+    <td>${fmtDec(total)}</td>
+    <td>${m.act?.d ?? '-'}</td>
+    <td>${m.act?.m ?? '-'}</td>
+    <td class="${lastCls}">${m.act?.last ?? '-'}</td>
+    <td><button class="btn-sm" data-refresh>刷新</button></td>`;
+
+  tr.querySelector('[data-addr]').addEventListener('click', () => copy(m.addr));
+  tr.querySelector('[data-refresh]').addEventListener('click', () => refreshRow(m));
+  tbody.appendChild(tr);
+
+  resultRows.push([idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`, fmtDec(m.avail), fmtDec(m.hold), fmtDec(total), m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-']);
+}
+
+function appendErrDirect(msg, addr, idx) {
+  const tbody = $('#tbl tbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="10" class="negative">${msg}</td>`;
+  tbody.appendChild(tr);
+  resultRows.push([idx, addr, msg]);
+}
+
+/* ========== 单行刷新 ========== */
+async function refreshRow(meta) {
+  // 清除缓存
+  queryCache.delete(meta.addr);
+  toast('正在刷新...');
+  try {
+    const rows = await queryOne(meta.addr);
+    // 找到对应的 safe 并更新
+    const match = rows.find(r => r.safe === meta.safe);
+    if (match && !match.err) {
+      Object.assign(meta, { vol: match.vol, cnt: match.cnt, pro: match.pro, avail: match.avail, hold: match.hold, act: match.act });
+      sortAndRender();
+      toast('刷新完成');
+    } else {
+      toast('刷新失败');
+    }
+  } catch {
+    toast('刷新失败');
+  }
+}
+
+/* ========== 数据汇总统计 ========== */
+function updateSummaryStats() {
+  const tfoot = $('#tfoot');
+  const tfootRow = $('#tfootRow');
+  if (!resultMeta.length || resultMeta.every(m => m.err)) {
+    tfoot.style.display = 'none';
+    return;
+  }
+
+  const valid = resultMeta.filter(m => !m.err);
+  const sumVol = valid.reduce((s, m) => s + (toNum(m.vol) || 0), 0);
+  const sumPro = valid.reduce((s, m) => s + (toNum(m.pro) || 0), 0);
+  const sumAvail = valid.reduce((s, m) => s + (toNum(m.avail) || 0), 0);
+  const sumHold = valid.reduce((s, m) => s + (toNum(m.hold) || 0), 0);
+  const sumTotal = sumAvail + sumHold;
+  const avgDays = valid.length ? (valid.reduce((s, m) => s + (m.act?.d || 0), 0) / valid.length).toFixed(1) : '-';
+  const avgMonths = valid.length ? (valid.reduce((s, m) => s + (m.act?.m || 0), 0) / valid.length).toFixed(1) : '-';
+
+  const proSign = sumPro < 0 ? '▼' : '▲';
+  const proCls = sumPro < 0 ? 'negative' : 'positive';
+
+  tfootRow.innerHTML = `
+    <td>汇总</td><td>${valid.length} 行</td>
+    <td>${fmtInt(sumVol)}</td><td>-</td>
+    <td class="${proCls}">${proSign} ${fmtInt(Math.abs(sumPro))}</td>
+    <td>${fmtDec(sumAvail)}</td><td>${fmtDec(sumHold)}</td><td>${fmtDec(sumTotal)}</td>
+    <td>${avgDays}</td><td>${avgMonths}</td><td>-</td><td>-</td>`;
+
+  tfoot.style.display = '';
+  applyColVisibility();
+}
+
 /* ========== 主流程 ========== */
-$('#run').onclick = async () => {
+$('#run').addEventListener('click', async () => {
   const raw = $('#input').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
   if (!raw.length) return toast('请输入地址');
 
   // 地址格式校验
   const invalid = raw.filter(a => !isValidAddr(a));
-  if (invalid.length) {
-    return toast(`${invalid.length} 个地址格式无效，请检查`);
+  if (invalid.length) return toast(`${invalid.length} 个地址格式无效，请检查`);
+
+  // 去重
+  const unique = [...new Set(raw)];
+  if (unique.length < raw.length) {
+    toast(`已自动去除 ${raw.length - unique.length} 个重复地址`);
   }
-  const list = raw;
+  const list = unique;
+
+  // 保存历史
+  saveHistory(list);
 
   const tbody = $('#tbl tbody');
   tbody.innerHTML = '';
   resultRows = [];
+  resultMeta = [];
+  abortFlag = false;
+
   $('#summary').style.display = 'none';
   $('#loading').style.display = 'block';
+  $('#filterRow').style.display = 'flex';
+  $('#filterInput').value = '';
   $('#bar').value = 0;
   $('#barTxt').textContent = '';
-  $('#run').disabled = $('#csv').disabled = true;
+  $('#run').disabled = $('#csv').disabled = $('#json').disabled = true;
+  $('#stop').style.display = '';
+  $('#tfoot').style.display = 'none';
 
-  let idx = 1, fail = 0;
+  let completed = 0, fail = 0, idx = 1;
 
-  for (let i = 0; i < list.length; i++) {
-    const owner = list[i];
-    $('#bar').value = (i / list.length) * 100;
-    $('#barTxt').textContent = `${i}/${list.length}`;
+  // 构建任务列表
+  const tasks = list.map(owner => () => queryOne(owner));
 
-    for (const row of await queryOne(owner)) {
+  await runPool(tasks, CONCURRENCY, (rows, taskIdx) => {
+    completed++;
+    $('#bar').value = (completed / list.length) * 100;
+    $('#barTxt').textContent = `${completed}/${list.length}`;
+
+    for (const row of rows) {
       if (row.err) {
-        appendErr(row.err, row.disp);
+        const meta = { idx, addr: row.disp, err: row.err };
+        resultMeta.push(meta);
+        appendErrDirect(row.err, row.disp, idx);
+        idx++; fail++;
       } else {
-        renderRow(row.disp, row.vol, row.cnt, row.pro, row.avail, row.hold, row.act);
+        const meta = { idx, addr: row.disp, safe: row.safe, vol: row.vol, cnt: row.cnt, pro: row.pro, avail: row.avail, hold: row.hold, act: row.act };
+        resultMeta.push(meta);
+        renderRowDirect(meta, idx);
+        idx++;
       }
     }
-
-    $('#bar').value = ((i + 1) / list.length) * 100;
-    $('#barTxt').textContent = `${i + 1}/${list.length}`;
-  }
+    applyColVisibility();
+  });
 
   $('#loading').style.display = 'none';
-  $('#run').disabled = $('#csv').disabled = false;
-  $('#summary').textContent = `共查询 ${list.length} 个输入地址，生成 ${idx - 1} 行数据，失败 ${fail}`;
+  $('#stop').style.display = 'none';
+  $('#run').disabled = $('#csv').disabled = $('#json').disabled = false;
+
+  const status = abortFlag ? '（已中断）' : '';
+  $('#summary').textContent = `共查询 ${list.length} 个输入地址，生成 ${idx - 1} 行数据，失败 ${fail} ${status}`;
   $('#summary').style.display = 'block';
 
-  function renderRow(addr, vol, cnt, pro, avail, hold, act) {
-    const p = toNum(pro);
-    const sign = p < 0 ? '▼' : '▲';
-    const cls = p < 0 ? 'negative' : 'positive';
-    const total = (toNum(avail) + toNum(hold)).toFixed(2);
-    const lastCls = act.thisMonth ? '' : 'inactive';
+  updateSummaryStats();
+});
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${idx}</td>
-      <td>${clip(addr)}<span class="copy" data-addr>📋</span></td>
-      <td>${fmtInt(vol)}</td>
-      <td>${cnt}</td>
-      <td class="${cls}">${sign} ${fmtInt(Math.abs(p))}</td>
-      <td>${fmtDec(avail)}</td>
-      <td>${fmtDec(hold)}</td>
-      <td>${fmtDec(total)}</td>
-      <td>${act.d}</td>
-      <td>${act.m}</td>
-      <td class="${lastCls}">${act.last}</td>`;
+/* ========== 中断查询 ========== */
+$('#stop').addEventListener('click', () => {
+  abortFlag = true;
+  $('#stop').disabled = true;
+  $('#stop').textContent = '正在停止...';
+  toast('查询将在当前批次完成后停止');
+});
 
-    // 安全绑定复制事件（避免 XSS）
-    tr.querySelector('[data-addr]').addEventListener('click', () => copy(addr));
-    tbody.appendChild(tr);
-
-    resultRows.push([idx, addr, fmtInt(vol), cnt, `${sign} ${fmtInt(Math.abs(p))}`, fmtDec(avail), fmtDec(hold), fmtDec(total), act.d, act.m, act.last]);
-    idx++;
-  }
-
-  function appendErr(msg, addr) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="9" class="negative">${msg}</td>`;
-    tbody.appendChild(tr);
-    resultRows.push([idx, addr, msg]);
-    idx++;
-    fail++;
-  }
-};
-
-/* ========== 导出 CSV（使用缓存的结果数据，正确处理特殊字符） ========== */
-$('#csv').onclick = () => {
+/* ========== 导出 CSV ========== */
+$('#csv').addEventListener('click', () => {
   if (!resultRows.length) return toast('暂无数据');
-
   const escapeCsv = v => {
     const s = String(v);
     return /[,"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-
   const lines = [CSV_HEADERS.map(escapeCsv).join(',')];
-  for (const row of resultRows) {
-    lines.push(row.map(escapeCsv).join(','));
-  }
-
+  for (const row of resultRows) lines.push(row.map(escapeCsv).join(','));
   const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -399,7 +841,33 @@ $('#csv').onclick = () => {
   a.download = `polymarket_${Date.now()}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-};
+});
+
+/* ========== 导出 JSON ========== */
+$('#json').addEventListener('click', () => {
+  if (!resultMeta.length) return toast('暂无数据');
+  const data = resultMeta.filter(m => !m.err).map(m => ({
+    address: m.addr,
+    safe: m.safe,
+    volume: toNum(m.vol),
+    pools: toNum(m.cnt),
+    profit: toNum(m.pro),
+    available: toNum(m.avail),
+    holdings: toNum(m.hold),
+    total: toNum(m.avail) + toNum(m.hold),
+    activeDays: m.act?.d ?? 0,
+    activeMonths: m.act?.m ?? 0,
+    lastActive: m.act?.last ?? '-',
+    activeThisMonth: m.act?.thisMonth ?? false,
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `polymarket_${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+});
 </script>
 </body>
 </html>
