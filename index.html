@@ -94,7 +94,7 @@ progress::-webkit-progress-bar{background:var(--c-border);border-radius:3px}
 
 /* 表格样式 */
 .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--radius);border:1px solid var(--c-border);margin-top:4px}
-table{width:100%;min-width:1000px;border-collapse:collapse;background:var(--c-card);transition:background .3s}
+table{width:100%;min-width:1100px;border-collapse:collapse;background:var(--c-card);transition:background .3s}
 th,td{padding:12px 10px;font-size:13px;text-align:center;transition:background .3s,border-color .3s}
 td{border-top:1px solid var(--c-border)}
 th{background:var(--c-primary);color:#fff;position:sticky;top:0;z-index:2;cursor:pointer;user-select:none;white-space:nowrap;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px;padding:10px 8px}
@@ -244,14 +244,15 @@ td .copy{color:var(--c-sub)}
           <th data-col="2" data-key="vol" title="点击排序">交易额 <span class="sort-hint">⇅</span></th>
           <th data-col="3" data-key="cnt" title="点击排序">池子数 <span class="sort-hint">⇅</span></th>
           <th data-col="4" data-key="pro" title="点击排序">盈亏 <span class="sort-hint">⇅</span></th>
-          <th data-col="5" data-key="avail" title="点击排序">可用 <span class="sort-hint">⇅</span></th>
-          <th data-col="6" data-key="hold" title="点击排序">持仓 <span class="sort-hint">⇅</span></th>
-          <th data-col="7" data-key="total" title="点击排序">总余额 <span class="sort-hint">⇅</span></th>
-          <th data-col="8" data-key="days" title="点击排序">日活 <span class="sort-hint">⇅</span></th>
-          <th data-col="9" data-key="months" title="点击排序">月活 <span class="sort-hint">⇅</span></th>
-          <th data-col="10" data-key="last" title="点击排序">最后活跃 <span class="sort-hint">⇅</span></th>
-          <th data-col="11" data-key="note">备注</th>
-          <th data-col="12" data-key="refresh">操作</th>
+          <th data-col="5" data-key="rank" title="点击排序">排名 <span class="sort-hint">⇅</span></th>
+          <th data-col="6" data-key="avail" title="点击排序">可用 <span class="sort-hint">⇅</span></th>
+          <th data-col="7" data-key="hold" title="点击排序">持仓 <span class="sort-hint">⇅</span></th>
+          <th data-col="8" data-key="total" title="点击排序">总余额 <span class="sort-hint">⇅</span></th>
+          <th data-col="9" data-key="days" title="点击排序">日活 <span class="sort-hint">⇅</span></th>
+          <th data-col="10" data-key="months" title="点击排序">月活 <span class="sort-hint">⇅</span></th>
+          <th data-col="11" data-key="last" title="点击排序">最后活跃 <span class="sort-hint">⇅</span></th>
+          <th data-col="12" data-key="note">备注</th>
+          <th data-col="13" data-key="refresh">操作</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -419,6 +420,8 @@ const api = {
   usdc: getUSDC,
   value: a => fetchJ(`https://data-api.polymarket.com/value?user=${a}`)
     .then(d => d[0]?.value ?? '-'),
+  rank: a => fetchJ(`https://lb-api.polymarket.com/leaderboard?window=all&limit=1&address=${a}`)
+    .then(d => d[0]?.rank ?? d[0]?.position ?? '-').catch(() => '-'),
   activity: async a => {
     try {
       const d = await fetchJ(`https://data-api.polymarket.com/activity?user=${a}&limit=999&offset=0`);
@@ -470,11 +473,11 @@ async function queryOne(owner) {
   for (const safe of safes) {
     if (abortFlag) break;
     try {
-      const [vol, cnt, pro, hold, act, avail] = await Promise.all([
+      const [vol, cnt, pro, hold, act, avail, rank] = await Promise.all([
         api.volume(safe), api.traded(safe), api.profit(safe),
-        api.value(safe),  api.activity(safe), api.usdc(safe)
+        api.value(safe),  api.activity(safe), api.usdc(safe), api.rank(safe)
       ]);
-      rows.push({ disp: owner, safe, vol, cnt, pro, avail, hold, act });
+      rows.push({ disp: owner, safe, vol, cnt, pro, avail, hold, act, rank });
     } catch (_) {
       rows.push({ disp: owner, err: '子查询失败' });
     }
@@ -500,7 +503,7 @@ async function runPool(tasks, concurrency, onDone) {
 /* ========== 存储查询结果 ========== */
 let resultRows = [];    // 每行原始数据对象
 let resultMeta = [];    // 每行渲染元数据
-const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注'];
+const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '排名', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注'];
 
 /* ========== 暗色模式 ========== */
 function initTheme() {
@@ -621,7 +624,7 @@ $('#clearHistory').addEventListener('click', () => {
 renderHistory();
 
 /* ========== 列显隐控制 ========== */
-const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注', '操作'];
+const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '排名', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注', '操作'];
 const hiddenCols = new Set();
 
 function buildColMenu() {
@@ -679,6 +682,7 @@ const sortExtract = {
   vol: row => toNum(row.vol),
   cnt: row => toNum(row.cnt),
   pro: row => toNum(row.pro),
+  rank: row => { const v = toNum(row.rank); return isNaN(v) ? Infinity : v; },
   avail: row => toNum(row.avail),
   hold: row => toNum(row.hold),
   total: row => toNum(row.avail) + toNum(row.hold),
@@ -781,6 +785,7 @@ function renderRowDirect(m, idx) {
     <td>${fmtInt(m.vol)}</td>
     <td>${m.cnt}</td>
     <td class="${cls}">${sign} ${fmtInt(Math.abs(p))}</td>
+    <td>${m.rank !== '-' && m.rank != null ? '#' + fmtInt(m.rank) : '-'}</td>
     <td>${fmtDec(m.avail)}</td>
     <td>${fmtDec(m.hold)}</td>
     <td>${fmtDec(total)}</td>
@@ -795,13 +800,13 @@ function renderRowDirect(m, idx) {
   tr.querySelector('[data-note]').addEventListener('change', function() { saveNote(m.addr, this.value.trim()); });
   tbody.appendChild(tr);
 
-  resultRows.push([idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`, fmtDec(m.avail), fmtDec(m.hold), fmtDec(total), m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-', getNote(m.addr)]);
+  resultRows.push([idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`, m.rank !== '-' && m.rank != null ? '#' + fmtInt(m.rank) : '-', fmtDec(m.avail), fmtDec(m.hold), fmtDec(total), m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-', getNote(m.addr)]);
 }
 
 function appendErrDirect(msg, addr, idx) {
   const tbody = $('#tbl tbody');
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="11" class="negative">${msg}</td>`;
+  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="12" class="negative">${msg}</td>`;
   tbody.appendChild(tr);
   resultRows.push([idx, addr, msg]);
 }
@@ -816,7 +821,7 @@ async function refreshRow(meta) {
     // 找到对应的 safe 并更新
     const match = rows.find(r => r.safe === meta.safe);
     if (match && !match.err) {
-      Object.assign(meta, { vol: match.vol, cnt: match.cnt, pro: match.pro, avail: match.avail, hold: match.hold, act: match.act });
+      Object.assign(meta, { vol: match.vol, cnt: match.cnt, pro: match.pro, rank: match.rank, avail: match.avail, hold: match.hold, act: match.act });
       renderAll();
       toast('刷新完成');
     } else {
@@ -866,6 +871,7 @@ function updateSummaryStats() {
     <td>汇总</td><td>${valid.length} 行</td>
     <td>${fmtInt(sumVol)}</td><td>-</td>
     <td class="${proCls}">${proSign} ${fmtInt(Math.abs(sumPro))}</td>
+    <td>-</td>
     <td>${fmtDec(sumAvail)}</td><td>${fmtDec(sumHold)}</td><td>${fmtDec(sumTotal)}</td>
     <td>${avgDays}</td><td>${avgMonths}</td><td>-</td><td>-</td><td>-</td>`;
 
@@ -929,7 +935,7 @@ $('#run').addEventListener('click', async () => {
         appendErrDirect(row.err, row.disp, idx);
         idx++; fail++;
       } else {
-        const meta = { _origIdx: idx, idx, addr: row.disp, safe: row.safe, vol: row.vol, cnt: row.cnt, pro: row.pro, avail: row.avail, hold: row.hold, act: row.act };
+        const meta = { _origIdx: idx, idx, addr: row.disp, safe: row.safe, vol: row.vol, cnt: row.cnt, pro: row.pro, rank: row.rank, avail: row.avail, hold: row.hold, act: row.act };
         resultMeta.push(meta);
         renderRowDirect(meta, idx);
         idx++;
@@ -986,6 +992,7 @@ $('#json').addEventListener('click', () => {
     volume: toNum(m.vol),
     pools: toNum(m.cnt),
     profit: toNum(m.pro),
+    rank: m.rank !== '-' ? toNum(m.rank) : null,
     available: toNum(m.avail),
     holdings: toNum(m.hold),
     total: toNum(m.avail) + toNum(m.hold),
