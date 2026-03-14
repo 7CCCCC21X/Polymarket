@@ -133,9 +133,8 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 .inactive{color:var(--c-red)}
 
 /* 复制按钮 & Toast */
-.copy{margin-left:4px;font-size:13px;color:rgba(255,255,255,.5);cursor:pointer;transition:color .2s}
+.copy{margin-left:4px;font-size:13px;color:var(--c-sub);cursor:pointer;transition:color .2s}
 .copy:hover{color:var(--c-primary)}
-td .copy{color:var(--c-sub)}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--c-tooltip);color:#fff;padding:10px 20px;border-radius:8px;font-size:13px;font-weight:500;opacity:0;transition:all .3s;z-index:300;box-shadow:0 4px 12px rgba(0,0,0,.15)}
 
 /* 备注输入框 */
@@ -172,10 +171,8 @@ td .copy{color:var(--c-sub)}
 </head>
 
 <body>
-<!-- 离线横幅 -->
 <div id="offlineBanner" class="offline-banner">网络已断开，请检查连接后重试</div>
 
-<!-- 暗色模式切换 -->
 <button id="themeBtn" class="theme-toggle" title="切换暗色/亮色模式">🌙</button>
 
 <div class="page-header">
@@ -187,7 +184,6 @@ td .copy{color:var(--c-sub)}
   <textarea id="input" placeholder="每行粘贴一个地址，或将 CSV/TXT 文件拖拽到此处..."></textarea>
   <div class="center"><p class="note">提示：查询前请将 VPN 切换到「全局模式」</p></div>
 
-  <!-- 查询历史 -->
   <div class="history-wrap" id="historyWrap" style="display:none">
     <details>
       <summary>查询历史</summary>
@@ -206,7 +202,6 @@ td .copy{color:var(--c-sub)}
   <div id="loading" style="display:none;"><progress id="bar" value="0" max="100"></progress><div id="barTxt"></div></div>
   <div id="summary"></div>
 
-  <!-- 汇总卡片 -->
   <div class="stats-cards" id="statsCards">
     <div class="stat-card">
       <div class="stat-label">总盈亏</div>
@@ -226,7 +221,6 @@ td .copy{color:var(--c-sub)}
     </div>
   </div>
 
-  <!-- 搜索过滤 + 列控制 -->
   <div class="filter-row" id="filterRow" style="display:none">
     <input id="filterInput" type="text" placeholder="搜索地址或数据..." />
     <div class="col-toggle">
@@ -266,7 +260,6 @@ td .copy{color:var(--c-sub)}
 <div id="toast" class="toast"></div>
 
 <script>
-/* ========== 常量 ========== */
 const FETCH_TIMEOUT   = 5000;
 const RPC_TIMEOUT     = 3500;
 const RETRY_BASE_MS   = 800;
@@ -276,12 +269,11 @@ const USDC_DECIMALS   = 6;
 const USDC_SCALE      = 10n ** BigInt(USDC_DECIMALS);
 const USDC_CONTRACT   = '0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174';
 const ETH_ADDR_RE     = /^0x[0-9a-fA-F]{40}$/;
-const CONCURRENCY     = 3;      // 并发查询数
-const RATE_LIMIT_MS   = 200;    // API 限流间隔
+const CONCURRENCY     = 3;
+const RATE_LIMIT_MS   = 200;
 const HISTORY_KEY     = 'pm_query_history';
 const MAX_HISTORY     = 20;
 
-/* ========== 工具函数 ========== */
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 
@@ -290,7 +282,10 @@ function toNum(n) {
   return Number.isFinite(v) ? v : NaN;
 }
 
-const fmtInt = n => { const v = toNum(n); return isNaN(v) ? '-' : Math.round(v).toLocaleString('en-US'); };
+const fmtInt = n => {
+  const v = toNum(n);
+  return isNaN(v) ? '-' : Math.round(v).toLocaleString('en-US');
+};
 
 const fmtDec = n => {
   const v = toNum(n);
@@ -298,7 +293,7 @@ const fmtDec = n => {
   return v.toLocaleString('en-US', { minimumFractionDigits: v % 1 ? 2 : 0 });
 };
 
-const clip = a => a.length > 12 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+const clip = a => a.length > 12 ? `${a.slice(0, 6)}...${a.slice(-4)}` : a;
 
 function toast(t) {
   const el = $('#toast');
@@ -315,7 +310,6 @@ function isValidAddr(addr) {
   return ETH_ADDR_RE.test(addr);
 }
 
-/* ========== 限流器（串行队列，防并发穿透） ========== */
 let rateLimitQueue = Promise.resolve();
 function rateLimitWait() {
   rateLimitQueue = rateLimitQueue.then(() =>
@@ -324,18 +318,14 @@ function rateLimitWait() {
   return rateLimitQueue;
 }
 
-/* ========== 结果缓存 ========== */
 const queryCache = new Map();
 
-/* ========== 中断控制 ========== */
 let abortFlag = false;
 let runController = null;
 
-/* ========== 网络请求 ========== */
 function fetchT(url, opts = {}, timeout = FETCH_TIMEOUT) {
   const c = new AbortController();
   const tid = setTimeout(() => c.abort(), timeout);
-  // 合并外部中断信号和超时信号
   const signal = runController
     ? AbortSignal.any([c.signal, runController.signal])
     : c.signal;
@@ -356,7 +346,6 @@ async function fetchJ(url, opts = {}, tries = 2) {
   }
 }
 
-/* ========== USDC 余额 (Polygon RPC) ========== */
 const POLYGON_RPCS = [
   "https://polygon.drpc.org",
   "https://polygon.publicnode.com",
@@ -384,7 +373,7 @@ async function rpcEthCall(payload, timeout = RPC_TIMEOUT) {
         preferredPolygonRpc = url;
         return result;
       }
-    } catch (_) { /* 换下一个 RPC */ }
+    } catch (_) {}
   }
   return null;
 }
@@ -408,7 +397,6 @@ async function getUSDC(addr) {
   }
 }
 
-/* ========== Polymarket API ========== */
 const api = {
   volume: a => fetchJ(`https://lb-api.polymarket.com/volume?window=all&limit=1&address=${a}`)
     .then(d => d[0]?.amount ?? '-'),
@@ -443,22 +431,20 @@ const api = {
   }
 };
 
-/* ========== 查询单个 Owner 下所有 Safe ========== */
 async function queryOne(owner) {
-  // 检查缓存
   if (queryCache.has(owner)) return queryCache.get(owner);
 
   let safes = [];
   try {
     const url = `https://safe-client.safe.global/v1/chains/137/owners/${owner}/safes`;
     const res = await fetchJ(url).catch(() => ({ safes: [] }));
-    safes = Array.isArray(res?.safes)       ? res.safes
-          : Array.isArray(res)              ? res
-          : Array.isArray(res?.['137'])     ? res['137']
+    safes = Array.isArray(res?.safes) ? res.safes
+          : Array.isArray(res) ? res
+          : Array.isArray(res?.['137']) ? res['137']
           : Array.isArray(res?.safes?.['137']) ? res.safes['137']
           : [];
     safes = safes.slice(0, MAX_SAFES);
-  } catch (_) { /* 忽略 */ }
+  } catch (_) {}
 
   if (!safes.length) {
     const result = [{ disp: owner, err: '无数据' }];
@@ -483,7 +469,6 @@ async function queryOne(owner) {
   return rows;
 }
 
-/* ========== 并发池 ========== */
 async function runPool(tasks, concurrency, onDone) {
   let i = 0;
   async function worker() {
@@ -497,12 +482,10 @@ async function runPool(tasks, concurrency, onDone) {
   await Promise.all(workers);
 }
 
-/* ========== 存储查询结果 ========== */
-let resultRows = [];    // 每行原始数据对象
-let resultMeta = [];    // 每行渲染元数据
+let resultRows = [];
+let resultMeta = [];
 const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注'];
 
-/* ========== 暗色模式 ========== */
 function initTheme() {
   const saved = localStorage.getItem('pm_theme');
   if (saved === 'dark' || (!saved && matchMedia('(prefers-color-scheme:dark)').matches)) {
@@ -524,7 +507,6 @@ $('#themeBtn').addEventListener('click', () => {
 });
 initTheme();
 
-/* ========== 离线提示 ========== */
 function updateOnlineStatus() {
   $('#offlineBanner').style.display = navigator.onLine ? 'none' : 'block';
 }
@@ -532,7 +514,6 @@ window.addEventListener('online', updateOnlineStatus);
 window.addEventListener('offline', updateOnlineStatus);
 updateOnlineStatus();
 
-/* ========== 拖拽/粘贴文件 ========== */
 const inputEl = $('#input');
 inputEl.addEventListener('dragover', e => { e.preventDefault(); inputEl.classList.add('drag-over'); });
 inputEl.addEventListener('dragleave', () => inputEl.classList.remove('drag-over'));
@@ -543,7 +524,6 @@ inputEl.addEventListener('drop', e => {
   if (file && /\.(csv|txt)$/i.test(file.name)) {
     const reader = new FileReader();
     reader.onload = () => {
-      // 从 CSV/TXT 提取地址
       const text = reader.result;
       const addrs = text.match(/0x[0-9a-fA-F]{40}/g);
       if (addrs?.length) {
@@ -559,12 +539,11 @@ inputEl.addEventListener('drop', e => {
   }
 });
 
-/* ========== 查询历史 ========== */
 function getHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
   catch { return []; }
 }
-/* ========== 备注持久化 ========== */
+
 const NOTE_KEY = 'pm_notes';
 function getNotes() { try { return JSON.parse(localStorage.getItem(NOTE_KEY)) || {}; } catch { return {}; } }
 function saveNote(addr, text) {
@@ -620,7 +599,6 @@ $('#clearHistory').addEventListener('click', () => {
 });
 renderHistory();
 
-/* ========== 列显隐控制 ========== */
 const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注', '操作'];
 const hiddenCols = new Set();
 
@@ -628,7 +606,7 @@ function buildColMenu() {
   const menu = $('#colMenu');
   menu.innerHTML = '';
   COL_NAMES.forEach((name, i) => {
-    if (i <= 1) return; // # 和地址始终显示
+    if (i <= 1) return;
     const label = document.createElement('label');
     const cb = document.createElement('input');
     cb.type = 'checkbox';
@@ -661,17 +639,19 @@ document.addEventListener('click', () => $('#colMenu').classList.remove('show'))
 $('#colMenu').addEventListener('click', e => e.stopPropagation());
 buildColMenu();
 
-/* ========== 搜索过滤 ========== */
-$('#filterInput').addEventListener('input', () => {
-  const q = $('#filterInput').value.toLowerCase();
+function applyFilter() {
+  const q = $('#filterInput').value.trim().toLowerCase();
   const rows = $$('#tbl tbody tr');
-  rows.forEach(tr => {
-    const text = tr.textContent.toLowerCase();
-    tr.style.display = text.includes(q) ? '' : 'none';
-  });
-});
 
-/* ========== 表格排序 ========== */
+  rows.forEach(tr => {
+    const fullAddr = (tr.dataset.fullAddr || '').toLowerCase();
+    const text = tr.textContent.toLowerCase();
+    tr.style.display = (!q || fullAddr.includes(q) || text.includes(q)) ? '' : 'none';
+  });
+}
+
+$('#filterInput').addEventListener('input', applyFilter);
+
 let sortKey = null, sortAsc = true;
 const sortExtract = {
   idx: row => row.idx,
@@ -697,7 +677,6 @@ $$('#tbl thead th').forEach(th => {
   const key = th.dataset.key;
   if (!key || key === 'refresh' || key === 'note') return;
   if (key === 'idx') {
-    // 点击 # 列：重置为原始输入顺序
     th.title = '点击恢复输入顺序';
     th.addEventListener('click', () => {
       sortKey = null; sortAsc = true;
@@ -711,14 +690,12 @@ $$('#tbl thead th').forEach(th => {
     if (sortKey === key) sortAsc = !sortAsc;
     else { sortKey = key; sortAsc = true; }
     sortAndRender();
-    // 更新箭头，隐藏当前列的 hint
     resetSortUI();
     const arrow = th.querySelector('.sort-arrow');
     if (arrow) arrow.textContent = sortAsc ? '▲' : '▼';
     const hint = th.querySelector('.sort-hint');
     if (hint) hint.style.display = 'none';
   });
-  // 添加排序箭头占位
   const span = document.createElement('span');
   span.className = 'sort-arrow';
   th.appendChild(span);
@@ -755,16 +732,13 @@ function renderAll() {
   });
   updateSummaryStats();
   applyColVisibility();
-  // 重新应用过滤
-  const q = $('#filterInput').value.toLowerCase();
-  if (q) $$('#tbl tbody tr').forEach(tr => { tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none'; });
+  applyFilter();
 }
 
 function sortAndRender() {
   renderAll();
 }
 
-/* ========== 渲染辅助函数 ========== */
 function renderRowDirect(m, idx) {
   const tbody = $('#tbl tbody');
   const p = toNum(m.pro);
@@ -775,6 +749,8 @@ function renderRowDirect(m, idx) {
 
   const tr = document.createElement('tr');
   tr.dataset.rowIdx = String(idx - 1);
+  tr.dataset.fullAddr = m.addr.toLowerCase();
+
   tr.innerHTML = `
     <td>${idx}</td>
     <td>${clip(m.addr)}<span class="copy" data-addr>📋</span></td>
@@ -792,28 +768,33 @@ function renderRowDirect(m, idx) {
 
   tr.querySelector('[data-addr]').addEventListener('click', () => copy(m.addr));
   tr.querySelector('[data-refresh]').addEventListener('click', () => refreshRow(m));
-  tr.querySelector('[data-note]').addEventListener('change', function() { saveNote(m.addr, this.value.trim()); });
+  tr.querySelector('[data-note]').addEventListener('change', function() {
+    saveNote(m.addr, this.value.trim());
+  });
+
   tbody.appendChild(tr);
 
-  resultRows.push([idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`, fmtDec(m.avail), fmtDec(m.hold), fmtDec(total), m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-', getNote(m.addr)]);
+  resultRows.push([
+    idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`,
+    fmtDec(m.avail), fmtDec(m.hold), fmtDec(total),
+    m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-', getNote(m.addr)
+  ]);
 }
 
 function appendErrDirect(msg, addr, idx) {
   const tbody = $('#tbl tbody');
   const tr = document.createElement('tr');
+  tr.dataset.fullAddr = addr.toLowerCase();
   tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="11" class="negative">${msg}</td>`;
   tbody.appendChild(tr);
   resultRows.push([idx, addr, msg]);
 }
 
-/* ========== 单行刷新 ========== */
 async function refreshRow(meta) {
-  // 清除缓存
   queryCache.delete(meta.addr);
   toast('正在刷新...');
   try {
     const rows = await queryOne(meta.addr);
-    // 找到对应的 safe 并更新
     const match = rows.find(r => r.safe === meta.safe);
     if (match && !match.err) {
       Object.assign(meta, { vol: match.vol, cnt: match.cnt, pro: match.pro, avail: match.avail, hold: match.hold, act: match.act });
@@ -827,7 +808,6 @@ async function refreshRow(meta) {
   }
 }
 
-/* ========== 数据汇总统计 ========== */
 function updateSummaryStats() {
   const tfoot = $('#tfoot');
   const tfootRow = $('#tfootRow');
@@ -851,7 +831,6 @@ function updateSummaryStats() {
   const proSign = sumPro < 0 ? '▼' : '▲';
   const proCls = sumPro < 0 ? 'negative' : 'positive';
 
-  // 汇总卡片
   const profitEl = $('#statProfit');
   profitEl.textContent = `${proSign} $${fmtDec(Math.abs(sumPro))}`;
   profitEl.className = `stat-value ${proCls}`;
@@ -861,7 +840,6 @@ function updateSummaryStats() {
   $('#statTotal').textContent = `$${fmtDec(sumTotal)}`;
   cards.style.display = 'grid';
 
-  // 表格底部汇总行
   tfootRow.innerHTML = `
     <td>汇总</td><td>${valid.length} 行</td>
     <td>${fmtInt(sumVol)}</td><td>-</td>
@@ -873,23 +851,19 @@ function updateSummaryStats() {
   applyColVisibility();
 }
 
-/* ========== 主流程 ========== */
 $('#run').addEventListener('click', async () => {
   const raw = $('#input').value.trim().split('\n').map(s => s.trim()).filter(Boolean);
   if (!raw.length) return toast('请输入地址');
 
-  // 地址格式校验
   const invalid = raw.filter(a => !isValidAddr(a));
   if (invalid.length) return toast(`${invalid.length} 个地址格式无效，请检查`);
 
-  // 去重
   const unique = [...new Set(raw)];
   if (unique.length < raw.length) {
     toast(`已自动去除 ${raw.length - unique.length} 个重复地址`);
   }
   const list = unique;
 
-  // 保存历史
   saveHistory(list);
 
   const tbody = $('#tbl tbody');
@@ -914,10 +888,9 @@ $('#run').addEventListener('click', async () => {
 
   let completed = 0, fail = 0, idx = 1;
 
-  // 构建任务列表
   const tasks = list.map(owner => () => queryOne(owner));
 
-  await runPool(tasks, CONCURRENCY, (rows, taskIdx) => {
+  await runPool(tasks, CONCURRENCY, (rows) => {
     completed++;
     $('#bar').value = (completed / list.length) * 100;
     $('#barTxt').textContent = `${completed}/${list.length}`;
@@ -950,7 +923,6 @@ $('#run').addEventListener('click', async () => {
   updateSummaryStats();
 });
 
-/* ========== 中断查询 ========== */
 $('#stop').addEventListener('click', () => {
   abortFlag = true;
   if (runController) runController.abort();
@@ -959,7 +931,6 @@ $('#stop').addEventListener('click', () => {
   toast('正在取消所有进行中的请求...');
 });
 
-/* ========== 导出 CSV ========== */
 $('#csv').addEventListener('click', () => {
   if (!resultRows.length) return toast('暂无数据');
   const escapeCsv = v => {
@@ -977,7 +948,6 @@ $('#csv').addEventListener('click', () => {
   URL.revokeObjectURL(url);
 });
 
-/* ========== 导出 JSON ========== */
 $('#json').addEventListener('click', () => {
   if (!resultMeta.length) return toast('暂无数据');
   const data = resultMeta.filter(m => !m.err).map(m => ({
