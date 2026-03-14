@@ -111,6 +111,10 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 .copy:hover{color:var(--c-primary)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--c-tooltip);color:#fff;padding:6px 12px;border-radius:4px;font-size:14px;opacity:0;transition:.3s;z-index:300}
 
+/* 备注输入框 */
+.note-input{width:80px;padding:3px 6px;border:1px solid var(--c-border);border-radius:4px;font-size:12px;background:var(--c-card);color:var(--c-text);text-align:center;transition:border-color .2s,width .2s}
+.note-input:focus{outline:none;border-color:var(--c-primary);width:120px}
+
 /* 页脚 */
 .footer{text-align:center;font-size:14px;color:var(--c-sub);margin-top:40px}
 .footer a{color:var(--c-primary);text-decoration:none}
@@ -204,7 +208,7 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
     <table id="tbl">
       <thead>
         <tr>
-          <th data-col="0" data-key="idx"># <span class="sort-hint">⇅</span></th>
+          <th data-col="0" data-key="idx" title="点击恢复输入顺序"># <span class="sort-hint">↺</span></th>
           <th data-col="1" data-key="addr">地址 <span class="sort-hint">⇅</span></th>
           <th data-col="2" data-key="vol" title="点击排序">交易额 <span class="sort-hint">⇅</span></th>
           <th data-col="3" data-key="cnt" title="点击排序">池子数 <span class="sort-hint">⇅</span></th>
@@ -215,7 +219,8 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
           <th data-col="8" data-key="days" title="点击排序">日活 <span class="sort-hint">⇅</span></th>
           <th data-col="9" data-key="months" title="点击排序">月活 <span class="sort-hint">⇅</span></th>
           <th data-col="10" data-key="last" title="点击排序">最后活跃 <span class="sort-hint">⇅</span></th>
-          <th data-col="11" data-key="refresh">操作</th>
+          <th data-col="11" data-key="note">备注</th>
+          <th data-col="12" data-key="refresh">操作</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -464,7 +469,7 @@ async function runPool(tasks, concurrency, onDone) {
 /* ========== 存储查询结果 ========== */
 let resultRows = [];    // 每行原始数据对象
 let resultMeta = [];    // 每行渲染元数据
-const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃'];
+const CSV_HEADERS = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注'];
 
 /* ========== 暗色模式 ========== */
 function initTheme() {
@@ -528,6 +533,16 @@ function getHistory() {
   try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
   catch { return []; }
 }
+/* ========== 备注持久化 ========== */
+const NOTE_KEY = 'pm_notes';
+function getNotes() { try { return JSON.parse(localStorage.getItem(NOTE_KEY)) || {}; } catch { return {}; } }
+function saveNote(addr, text) {
+  const notes = getNotes();
+  if (text) notes[addr.toLowerCase()] = text; else delete notes[addr.toLowerCase()];
+  localStorage.setItem(NOTE_KEY, JSON.stringify(notes));
+}
+function getNote(addr) { return getNotes()[addr.toLowerCase()] || ''; }
+
 function saveHistory(addrs) {
   const list = getHistory();
   const entry = { addrs: addrs.slice(0, 50), time: Date.now(), count: addrs.length };
@@ -575,7 +590,7 @@ $('#clearHistory').addEventListener('click', () => {
 renderHistory();
 
 /* ========== 列显隐控制 ========== */
-const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '操作'];
+const COL_NAMES = ['#', '地址', '交易额', '池子数', '盈亏', '可用', '持仓', '总余额', '日活', '月活', '最后活跃', '备注', '操作'];
 const hiddenCols = new Set();
 
 function buildColMenu() {
@@ -639,18 +654,34 @@ const sortExtract = {
   days: row => row.act?.d ?? 0,
   months: row => row.act?.m ?? 0,
   last: row => row.act?.last === '今天' ? 0 : (parseInt(row.act?.last) || 9999),
+  note: row => getNote(row.addr),
 };
+
+function resetSortUI() {
+  $$('#tbl thead th .sort-arrow').forEach(s => s.textContent = '');
+  $$('#tbl thead th .sort-hint').forEach(s => s.style.display = '');
+}
 
 $$('#tbl thead th').forEach(th => {
   const key = th.dataset.key;
-  if (!key || key === 'refresh') return;
+  if (!key || key === 'refresh' || key === 'note') return;
+  if (key === 'idx') {
+    // 点击 # 列：重置为原始输入顺序
+    th.title = '点击恢复输入顺序';
+    th.addEventListener('click', () => {
+      sortKey = null; sortAsc = true;
+      renderAll();
+      resetSortUI();
+      toast('已恢复输入顺序');
+    });
+    return;
+  }
   th.addEventListener('click', () => {
     if (sortKey === key) sortAsc = !sortAsc;
     else { sortKey = key; sortAsc = true; }
     sortAndRender();
     // 更新箭头，隐藏当前列的 hint
-    $$('#tbl thead th .sort-arrow').forEach(s => s.textContent = '');
-    $$('#tbl thead th .sort-hint').forEach(s => s.style.display = '');
+    resetSortUI();
     const arrow = th.querySelector('.sort-arrow');
     if (arrow) arrow.textContent = sortAsc ? '▲' : '▼';
     const hint = th.querySelector('.sort-hint');
@@ -663,7 +694,7 @@ $$('#tbl thead th').forEach(th => {
 });
 
 function getSortedMeta() {
-  if (!sortKey) return [...resultMeta];
+  if (!sortKey) return [...resultMeta].sort((a, b) => a._origIdx - b._origIdx);
   const extractor = sortExtract[sortKey];
   if (!extractor) return [...resultMeta];
   return [...resultMeta].sort((a, b) => {
@@ -725,19 +756,21 @@ function renderRowDirect(m, idx) {
     <td>${m.act?.d ?? '-'}</td>
     <td>${m.act?.m ?? '-'}</td>
     <td class="${lastCls}">${m.act?.last ?? '-'}</td>
+    <td><input class="note-input" data-note placeholder="添加备注" value="${(getNote(m.addr) || '').replace(/"/g, '&quot;')}"></td>
     <td><button class="btn-sm" data-refresh>刷新</button></td>`;
 
   tr.querySelector('[data-addr]').addEventListener('click', () => copy(m.addr));
   tr.querySelector('[data-refresh]').addEventListener('click', () => refreshRow(m));
+  tr.querySelector('[data-note]').addEventListener('change', function() { saveNote(m.addr, this.value.trim()); });
   tbody.appendChild(tr);
 
-  resultRows.push([idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`, fmtDec(m.avail), fmtDec(m.hold), fmtDec(total), m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-']);
+  resultRows.push([idx, m.addr, fmtInt(m.vol), m.cnt, `${sign} ${fmtInt(Math.abs(p))}`, fmtDec(m.avail), fmtDec(m.hold), fmtDec(total), m.act?.d ?? 0, m.act?.m ?? 0, m.act?.last ?? '-', getNote(m.addr)]);
 }
 
 function appendErrDirect(msg, addr, idx) {
   const tbody = $('#tbl tbody');
   const tr = document.createElement('tr');
-  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="10" class="negative">${msg}</td>`;
+  tr.innerHTML = `<td>${idx}</td><td>${clip(addr)}</td><td colspan="11" class="negative">${msg}</td>`;
   tbody.appendChild(tr);
   resultRows.push([idx, addr, msg]);
 }
@@ -803,7 +836,7 @@ function updateSummaryStats() {
     <td>${fmtInt(sumVol)}</td><td>-</td>
     <td class="${proCls}">${proSign} ${fmtInt(Math.abs(sumPro))}</td>
     <td>${fmtDec(sumAvail)}</td><td>${fmtDec(sumHold)}</td><td>${fmtDec(sumTotal)}</td>
-    <td>${avgDays}</td><td>${avgMonths}</td><td>-</td><td>-</td>`;
+    <td>${avgDays}</td><td>${avgMonths}</td><td>-</td><td>-</td><td>-</td>`;
 
   tfoot.style.display = '';
   applyColVisibility();
@@ -860,12 +893,12 @@ $('#run').addEventListener('click', async () => {
 
     for (const row of rows) {
       if (row.err) {
-        const meta = { idx, addr: row.disp, err: row.err };
+        const meta = { _origIdx: idx, idx, addr: row.disp, err: row.err };
         resultMeta.push(meta);
         appendErrDirect(row.err, row.disp, idx);
         idx++; fail++;
       } else {
-        const meta = { idx, addr: row.disp, safe: row.safe, vol: row.vol, cnt: row.cnt, pro: row.pro, avail: row.avail, hold: row.hold, act: row.act };
+        const meta = { _origIdx: idx, idx, addr: row.disp, safe: row.safe, vol: row.vol, cnt: row.cnt, pro: row.pro, avail: row.avail, hold: row.hold, act: row.act };
         resultMeta.push(meta);
         renderRowDirect(meta, idx);
         idx++;
@@ -929,6 +962,7 @@ $('#json').addEventListener('click', () => {
     activeMonths: m.act?.m ?? 0,
     lastActive: m.act?.last ?? '-',
     activeThisMonth: m.act?.thisMonth ?? false,
+    note: getNote(m.addr),
   }));
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
