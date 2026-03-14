@@ -155,6 +155,9 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 .author-badge{display:inline-flex;align-items:center;gap:6px;background:var(--c-card);border:1px solid var(--c-border);border-radius:20px;padding:5px 16px 5px 12px;font-size:13px;font-weight:500;color:var(--c-text);text-decoration:none;margin-left:12px;vertical-align:middle;transition:all .2s}
 .author-badge:hover{background:var(--c-hover);box-shadow:var(--shadow);border-color:var(--c-primary-light)}
 .author-badge svg{width:15px;height:15px;fill:currentColor}
+.tg-badge{display:inline-flex;align-items:center;gap:6px;background:var(--c-card);border:1px solid var(--c-border);border-radius:20px;padding:5px 16px 5px 12px;font-size:13px;font-weight:500;color:#229ED9;text-decoration:none;margin-left:8px;vertical-align:middle;transition:all .2s}
+.tg-badge:hover{background:var(--c-hover);box-shadow:var(--shadow);border-color:#229ED9}
+.tg-badge svg{width:15px;height:15px;fill:#229ED9}
 
 /* 移动端适配 */
 @media(max-width:640px){
@@ -171,6 +174,7 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
   .filter-row input{width:100%}
   .toolbar{gap:4px}
   .author-badge{margin-left:0;margin-top:8px;display:flex}
+  .tg-badge{margin-left:0;margin-top:8px;display:flex}
 }
 </style>
 </head>
@@ -184,7 +188,7 @@ tfoot td{background:var(--c-summary-bg);font-weight:700;border-top:2px solid var
 <button id="themeBtn" class="theme-toggle" title="">🌙</button>
 
 <div class="page-header">
-  <h1><span>Polymarket</span> <span id="pageTitle"></span> <a class="author-badge" href="https://x.com/0xXIAOc" target="_blank"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@0xXIAOc</a></h1>
+  <h1><span>Polymarket</span> <span id="pageTitle"></span> <a class="author-badge" href="https://x.com/0xXIAOc" target="_blank"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>@0xXIAOc</a> <a class="tg-badge" id="tgBadge" href="https://t.me/xiaoccaac" target="_blank"><svg viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg><span id="tgText">加入交流群</span></a></h1>
   <p class="subtitle" id="subtitleEl"></p>
 </div>
 
@@ -302,6 +306,7 @@ const i18n = {
     historyEntry:n=>`${n} 个地址`, historyDel:'删',
     csvHeaders:['#','地址','交易额','池子数','盈亏','可用','持仓','总余额','日活','月活','最后活跃','备注'],
     offlineMsg:'网络已断开，请检查连接后重试',
+    tgGroup:'加入交流群',
   },
   en: {
     title:'Batch Query', subtitle:'Paste addresses (one per line), or drag in CSV / TXT files. Supports concurrent queries & real-time updates.',
@@ -335,6 +340,7 @@ const i18n = {
     historyEntry:n=>`${n} address(es)`, historyDel:'Del',
     csvHeaders:['#','Address','Volume','Pools','P&L','Available','Holdings','Balance','Days','Months','Last Active','Notes'],
     offlineMsg:'Network disconnected. Please check your connection and retry.',
+    tgGroup:'Join Group',
   }
 };
 let curLang = localStorage.getItem('pm_lang') || 'zh';
@@ -617,6 +623,7 @@ function applyLang() {
   $('#themeBtn').title = L('themeTitle');
   $('#filterInput').placeholder = L('searchPlaceholder');
   $('#offlineBanner').textContent = L('offlineMsg');
+  $('#tgText').textContent = L('tgGroup');
 
   // table headers
   const cols = L('thCols');
